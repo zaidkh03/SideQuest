@@ -152,6 +152,9 @@ namespace SideQuest.Data
         {
             builder.Entity<SubscriptionPlan>(entity =>
             {
+                entity.HasIndex(plan => plan.Name)
+                    .IsUnique();
+
                 entity.Property(plan => plan.Name)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -191,6 +194,13 @@ namespace SideQuest.Data
 
                 entity.HasIndex(job => job.CategoryId);
 
+                entity.HasIndex(job => new
+                {
+                    job.Status,
+                    job.CategoryId,
+                    job.StartDate
+                });
+
                 entity.Property(job => job.Title)
                     .IsRequired()
                     .HasMaxLength(200);
@@ -217,6 +227,13 @@ namespace SideQuest.Data
 
             builder.Entity<JobApplication>(entity =>
             {
+                entity.HasIndex(application => new
+                    {
+                        application.JobId,
+                        application.WorkerId
+                    })
+                    .IsUnique();
+
                 entity.Property(application => application.CoverLetter)
                     .IsRequired();
 
@@ -233,6 +250,13 @@ namespace SideQuest.Data
 
             builder.Entity<JobAssignment>(entity =>
             {
+                entity.HasIndex(assignment => new
+                    {
+                        assignment.JobId,
+                        assignment.WorkerId
+                    })
+                    .IsUnique();
+
                 entity.Property(assignment => assignment.AgreedRate)
                     .HasPrecision(18, 2);
 
@@ -258,6 +282,14 @@ namespace SideQuest.Data
         {
             builder.Entity<Review>(entity =>
             {
+                entity.HasIndex(review => new
+                    {
+                        review.JobId,
+                        review.ReviewerId,
+                        review.ReviewedUserId
+                    })
+                    .IsUnique();
+
                 entity.Property(review => review.Comment)
                     .IsRequired()
                     .HasMaxLength(2000);
@@ -296,8 +328,8 @@ namespace SideQuest.Data
                     .HasPrecision(18, 2);
 
                 entity.HasOne(wallet => wallet.User)
-                    .WithMany(user => user.Wallets)
-                    .HasForeignKey(wallet => wallet.UserId)
+                    .WithOne(user => user.Wallet)
+                    .HasForeignKey<Wallet>(wallet => wallet.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -379,6 +411,9 @@ namespace SideQuest.Data
 
             builder.Entity<Achievement>(entity =>
             {
+                entity.HasIndex(achievement => achievement.Name)
+                    .IsUnique();
+
                 entity.Property(achievement => achievement.Name)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -416,6 +451,9 @@ namespace SideQuest.Data
         {
             builder.Entity<Skill>(entity =>
             {
+                entity.HasIndex(skill => skill.Name)
+                    .IsUnique();
+
                 entity.Property(skill => skill.Name)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -502,6 +540,9 @@ namespace SideQuest.Data
         {
             builder.Entity<Category>(entity =>
             {
+                entity.HasIndex(category => category.Name)
+                    .IsUnique();
+
                 entity.Property(category => category.Name)
                     .IsRequired()
                     .HasMaxLength(100);

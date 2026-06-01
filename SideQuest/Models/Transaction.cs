@@ -12,7 +12,7 @@ namespace SideQuest.Models
         [Required]
         public string UserId { get; set; } = string.Empty;
 
-        public int JobId { get; set; }
+        public int? JobId { get; set; }
 
         [Precision(18, 2)]
         public decimal Amount { get; set; }
@@ -27,6 +27,6 @@ namespace SideQuest.Models
         public virtual ApplicationUser User { get; set; } = null!;
 
         [ForeignKey(nameof(JobId))]
-        public virtual Job Job { get; set; } = null!;
+        public virtual Job? Job { get; set; }
     }
 }

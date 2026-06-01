@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SideQuest.Authorization;
 using SideQuest.Models;
 
 namespace SideQuest.Data.Seed
@@ -6,18 +8,85 @@ namespace SideQuest.Data.Seed
     public class DatabaseSeeder : IDataSeeder
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DatabaseSeeder(AppDbContext context)
+        public DatabaseSeeder(
+            AppDbContext context,
+            IConfiguration configuration,
+            IWebHostEnvironment environment,
+            RoleManager<IdentityRole> roleManager,
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _configuration = configuration;
+            _environment = environment;
+            _roleManager = roleManager;
+            _userManager = userManager;
         }
 
         public async Task SeedAsync()
         {
+            await SeedRoles();
+            await SeedDevelopmentAdmin();
             await SeedCategories();
             await SeedSubscriptionPlans();
             await SeedAchievements();
+            await SeedSkills();
             await _context.SaveChangesAsync();
+        }
+
+        private async Task SeedRoles()
+        {
+            foreach (var role in SideQuestRoles.All)
+            {
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+        }
+
+        private async Task SeedDevelopmentAdmin()
+        {
+            if (!_environment.IsDevelopment())
+            {
+                return;
+            }
+
+            var adminEmail = _configuration["Seed:AdminEmail"];
+            var adminPassword = _configuration["Seed:AdminPassword"];
+
+            if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+            {
+                return;
+            }
+
+            var adminUser = await _userManager.FindByEmailAsync(adminEmail);
+            if (adminUser is null)
+            {
+                adminUser = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    EmailConfirmed = true,
+                    FullName = "SideQuest Admin"
+                };
+
+                var createResult = await _userManager.CreateAsync(adminUser, adminPassword);
+                if (!createResult.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to seed development admin: {string.Join("; ", createResult.Errors.Select(error => error.Description))}");
+                }
+            }
+
+            if (!await _userManager.IsInRoleAsync(adminUser, SideQuestRoles.Admin))
+            {
+                await _userManager.AddToRoleAsync(adminUser, SideQuestRoles.Admin);
+            }
         }
 
         private async Task SeedCategories()
@@ -175,6 +244,36 @@ namespace SideQuest.Data.Seed
 
             await _context.Achievements.AddRangeAsync(
                 achievements.Where(achievement => !existingNames.Contains(achievement.Name)));
+        }
+
+        private async Task SeedSkills()
+        {
+            var existingSkillNames = await _context.Skills
+                .Select(skill => skill.Name)
+                .ToListAsync();
+
+            var existingNames = existingSkillNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var skills = new[]
+            {
+                "Sales Outreach",
+                "Lead Generation",
+                "Social Media",
+                "Photography",
+                "Event Operations",
+                "Customer Support",
+                "Delivery",
+                "IT Support",
+                "Graphic Design",
+                "Writing",
+                "Data Entry",
+                "Translation"
+            };
+
+            await _context.Skills.AddRangeAsync(
+                skills
+                    .Where(skill => !existingNames.Contains(skill))
+                    .Select(skill => new Skill { Name = skill }));
         }
     }
 }

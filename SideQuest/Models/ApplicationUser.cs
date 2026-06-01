@@ -29,7 +29,7 @@ namespace SideQuest.Models
 
         public virtual ICollection<Notification> Notifications { get; set; } = new HashSet<Notification>();
 
-        public virtual ICollection<Wallet> Wallets { get; set; } = new HashSet<Wallet>();
+        public virtual Wallet? Wallet { get; set; }
 
         public virtual ICollection<BankAccount> BankAccounts { get; set; } = new HashSet<BankAccount>();
 
