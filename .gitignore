@@ -8,3 +8,4 @@ obj/
 TestResults/
 wwwroot/lib/
 node_modules/
+/SideQuest/Views/template
