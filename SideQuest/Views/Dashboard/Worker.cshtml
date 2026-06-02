@@ -1,0 +1,233 @@
+@model WorkerDashboardViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel
+        {
+            Label = "Wallet Balance",
+            Value = Model.WalletBalance.ToString("C"),
+            Detail = $"{Model.TotalEarned:C} earned all time",
+            Icon = "account_balance_wallet",
+            Accent = "secondary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Active Quests",
+            Value = Model.ActiveAssignmentsCount.ToString(),
+            Detail = $"{Model.PendingApplicationsCount} pending applications",
+            Icon = "swords",
+            Accent = "primary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Completed",
+            Value = Model.CompletedJobs.ToString(),
+            Detail = $"{Model.AverageRating:0.0} average rating",
+            Icon = "workspace_premium",
+            Accent = "tertiary"
+        }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Portal",
+    Title = $"Welcome back, {Model.DisplayName}",
+    Subtitle = "Track your active quests, applications, rewards, and XP from one place."
+})" />
+
+<section class="sq-stat-grid">
+    <article class="sq-rank-card">
+        <div class="sq-rank-card__header">
+            <div>
+                <span class="sq-eyebrow">Current Rank</span>
+                <h2>@Model.Headline</h2>
+            </div>
+            <span class="sq-level-pill">
+                <span class="material-symbols-outlined" aria-hidden="true">star</span>
+                Level @Model.Level
+            </span>
+        </div>
+        <div class="sq-progress">
+            <div class="sq-progress__meta">
+                <span>@Model.XP XP</span>
+                <span>@Model.XPProgressPercent% to next level</span>
+            </div>
+            <div class="sq-progress__track">
+                <span style="width: @Model.XPProgressPercent%"></span>
+            </div>
+        </div>
+    </article>
+
+    @foreach (var stat in stats)
+    {
+        <partial name="_StatCard" model="stat" />
+    }
+</section>
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Quest Board</span>
+                <h2>Recommended Open Quests</h2>
+            </div>
+            <a class="sq-link-button" asp-controller="Dashboard" asp-action="Worker">Refresh</a>
+        </div>
+
+        @if (Model.SuggestedJobs.Count == 0)
+        {
+            <div class="sq-empty-state">
+                <span class="material-symbols-outlined" aria-hidden="true">explore</span>
+                <h3>No open quests yet</h3>
+                <p>Open jobs from employers will appear here once they are published.</p>
+            </div>
+        }
+        else
+        {
+            <div class="sq-quest-list">
+                @foreach (var job in Model.SuggestedJobs)
+                {
+                    <article class="sq-quest-card">
+                        <div class="sq-quest-card__top">
+                            <span class="sq-badge">@job.CategoryName</span>
+                            <strong>@job.RewardLabel</strong>
+                        </div>
+                        <h3>@job.Title</h3>
+                        <p>@job.CompanyName</p>
+                        <div class="sq-quest-card__meta">
+                            <span>
+                                <span class="material-symbols-outlined" aria-hidden="true">group</span>
+                                @job.AcceptedWorkers/@job.WorkersNeeded hired
+                            </span>
+                            <span>
+                                <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                                @job.CreatedAt.ToLocalTime().ToString("MMM d")
+                            </span>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Applications</span>
+                    <h2>Recent Applications</h2>
+                </div>
+            </div>
+            @if (Model.RecentApplications.Count == 0)
+            {
+                <div class="sq-compact-empty">Applications you submit will show up here.</div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>Quest</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Applied</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in Model.RecentApplications)
+                            {
+                                <tr>
+                                    <td>@application.JobTitle</td>
+                                    <td>@application.CompanyName</td>
+                                    <td><span class="sq-status">@application.Status</span></td>
+                                    <td>@application.AppliedAt.ToLocalTime().ToString("MMM d")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Active Work</span>
+                    <h2>Quest Log</h2>
+                </div>
+            </div>
+            @if (Model.ActiveAssignments.Count == 0)
+            {
+                <div class="sq-compact-empty">Accepted assignments will land here.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var assignment in Model.ActiveAssignments)
+                    {
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">task_alt</span>
+                            <div>
+                                <h3>@assignment.JobTitle</h3>
+                                <p>@assignment.CompanyName · @assignment.AgreedRate.ToString("C")</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Signals</span>
+                    <h2>Notifications</h2>
+                </div>
+            </div>
+            @if (Model.Notifications.Count == 0)
+            {
+                <div class="sq-compact-empty">No notifications yet.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var notification in Model.Notifications)
+                    {
+                        <article class="sq-feed-item @(notification.IsRead ? string.Empty : "is-unread")">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">notifications</span>
+                            <div>
+                                <h3>@notification.Title</h3>
+                                <p>@notification.Message</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Trophy Room</span>
+                    <h2>Achievements</h2>
+                </div>
+            </div>
+            @* Placeholder: richer badge art will be wired after achievement media assets are added. *@
+            @if (Model.AchievementNames.Count == 0)
+            {
+                <div class="sq-compact-empty">Complete quests to unlock achievements.</div>
+            }
+            else
+            {
+                <div class="sq-chip-list">
+                    @foreach (var achievement in Model.AchievementNames)
+                    {
+                        <span class="sq-chip">@achievement</span>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+</section>

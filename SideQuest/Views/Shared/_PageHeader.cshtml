@@ -1,0 +1,25 @@
+@model PageHeaderViewModel
+
+<section class="sq-page-header">
+    <div>
+        @if (!string.IsNullOrWhiteSpace(Model.Eyebrow))
+        {
+            <span class="sq-eyebrow">@Model.Eyebrow</span>
+        }
+        <h1>@Model.Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+        {
+            <p>@Model.Subtitle</p>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.ActionText) && !string.IsNullOrWhiteSpace(Model.ActionUrl))
+    {
+        <a class="sq-button sq-button--primary" href="@Model.ActionUrl">
+            @if (!string.IsNullOrWhiteSpace(Model.ActionIcon))
+            {
+                <span class="material-symbols-outlined" aria-hidden="true">@Model.ActionIcon</span>
+            }
+            @Model.ActionText
+        </a>
+    }
+</section>

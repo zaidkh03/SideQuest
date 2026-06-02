@@ -1,6 +1,31 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Privacy";
+    ViewData["Shell"] = "Marketing";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<section class="sq-content-page">
+    <span class="sq-eyebrow">Privacy</span>
+    <h1>SideQuest privacy notice</h1>
+    <p>
+        SideQuest stores account, profile, job, application, review, notification,
+        and wallet records so the marketplace can operate securely and consistently.
+    </p>
+
+    <div class="sq-info-grid">
+        <article class="sq-panel">
+            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+            <h2>Account protection</h2>
+            <p>Authentication uses ASP.NET Core Identity, with password handling delegated to the framework.</p>
+        </article>
+        <article class="sq-panel">
+            <span class="material-symbols-outlined" aria-hidden="true">database</span>
+            <h2>Data records</h2>
+            <p>Marketplace data is modeled with EF Core entities and SQL Server migrations.</p>
+        </article>
+        <article class="sq-panel">
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+            <h2>Role access</h2>
+            <p>Worker, Employer, and Admin access is separated through Identity roles and authorization policies.</p>
+        </article>
+    </div>
+</section>

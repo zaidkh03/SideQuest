@@ -1,0 +1,46 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    var shell = (ViewData["Shell"] as string) ?? (SignInManager.IsSignedIn(User) ? "App" : "Marketing");
+    var isAppShell = string.Equals(shell, "App", StringComparison.OrdinalIgnoreCase);
+    var title = (ViewData["TopBarTitle"] as string) ?? (ViewData["Title"] as string) ?? "SideQuest";
+}
+
+<header class="sq-topbar @(isAppShell ? "sq-topbar--app" : "sq-topbar--marketing")">
+    <div class="sq-topbar__brand">
+        <a class="sq-brand" asp-area="" asp-controller="Home" asp-action="Index" aria-label="SideQuest home">
+            <span class="sq-brand__mark material-symbols-outlined" aria-hidden="true">swords</span>
+            <span class="sq-brand__text">SideQuest</span>
+        </a>
+    </div>
+
+    @if (isAppShell)
+    {
+        <div class="sq-topbar__title">
+            <span class="sq-eyebrow">Portal</span>
+            <strong>@title</strong>
+        </div>
+        <div class="sq-topbar__tools">
+            <div class="sq-search" role="search">
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                <input type="search" placeholder="Search quests..." aria-label="Search quests" />
+            </div>
+            <a class="sq-icon-button" asp-controller="Dashboard" asp-action="Index" aria-label="Notifications">
+                <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+            </a>
+            <partial name="_LoginPartial" />
+        </div>
+    }
+    else
+    {
+        <nav class="sq-marketing-nav" aria-label="Primary navigation">
+            <a asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+            }
+        </nav>
+        <partial name="_LoginPartial" />
+    }
+</header>

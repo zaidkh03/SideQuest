@@ -1,0 +1,19 @@
+@model StatCardViewModel
+
+<article class="sq-stat-card sq-accent-@Model.Accent">
+    <div class="sq-stat-card__top">
+        <span class="sq-stat-card__icon material-symbols-outlined" aria-hidden="true">@Model.Icon</span>
+        @if (!string.IsNullOrWhiteSpace(Model.Trend))
+        {
+            <span class="sq-badge sq-badge--soft">@Model.Trend</span>
+        }
+    </div>
+    <div>
+        <p class="sq-stat-card__label">@Model.Label</p>
+        <strong class="sq-stat-card__value">@Model.Value</strong>
+        @if (!string.IsNullOrWhiteSpace(Model.Detail))
+        {
+            <p class="sq-stat-card__detail">@Model.Detail</p>
+        }
+    </div>
+</article>

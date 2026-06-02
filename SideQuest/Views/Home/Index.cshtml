@@ -1,8 +1,109 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Level Up Flexible Work";
+    ViewData["Shell"] = "Marketing";
+    var isSignedIn = User.Identity?.IsAuthenticated == true;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="sq-hero">
+    <div class="sq-hero__content">
+        <span class="sq-eyebrow">Productive play for real work</span>
+        <h1>Find quests, hire talent, and turn gig work into progress.</h1>
+        <p>
+            SideQuest connects companies with flexible workers through job posts,
+            applications, assignments, wallet tracking, reviews, and XP-driven growth.
+        </p>
+        <div class="sq-hero__actions">
+            @if (isSignedIn)
+            {
+                <a class="sq-button sq-button--primary" asp-controller="Dashboard" asp-action="Index">
+                    <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                    Open dashboard
+                </a>
+            }
+            else
+            {
+                <a class="sq-button sq-button--primary" asp-area="Identity" asp-page="/Account/Register">
+                    <span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
+                    Start your quest
+                </a>
+                <a class="sq-button sq-button--ghost" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            }
+        </div>
+    </div>
+
+    <div class="sq-hero-preview" aria-label="SideQuest dashboard preview">
+        <div class="sq-preview-toolbar">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="sq-preview-header">
+            <div>
+                <span class="sq-eyebrow">Quest Board</span>
+                <h2>Today’s opportunities</h2>
+            </div>
+            <span class="sq-badge sq-badge--secondary">Live MVP</span>
+        </div>
+        <div class="sq-preview-grid">
+            <article class="sq-mini-stat">
+                <span class="material-symbols-outlined" aria-hidden="true">work</span>
+                <strong>Open jobs</strong>
+                <p>Browse published quests</p>
+            </article>
+            <article class="sq-mini-stat">
+                <span class="material-symbols-outlined" aria-hidden="true">groups</span>
+                <strong>Applications</strong>
+                <p>Accept the right workers</p>
+            </article>
+            <article class="sq-mini-stat">
+                <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+                <strong>Wallet</strong>
+                <p>Track earnings and withdrawals</p>
+            </article>
+        </div>
+        <article class="sq-preview-quest">
+            <div>
+                <span class="sq-badge">Design</span>
+                <h3>Launch campaign landing page</h3>
+                <p>Fixed bounty · 2 workers needed</p>
+            </div>
+            <span class="sq-preview-quest__reward">$600</span>
+        </article>
+    </div>
+</section>
+
+<section class="sq-marketing-section">
+    <div class="sq-section-heading sq-section-heading--center">
+        <span class="sq-eyebrow">Three portals, one system</span>
+        <h2>Built around the workflows already in the backend.</h2>
+    </div>
+
+    <div class="sq-feature-grid">
+        <article class="sq-feature-card">
+            <span class="material-symbols-outlined" aria-hidden="true">person_search</span>
+            <h3>Worker Portal</h3>
+            <p>Profiles, skills, applications, active assignments, reviews, wallet activity, and XP progression.</p>
+        </article>
+        <article class="sq-feature-card">
+            <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
+            <h3>Employer Portal</h3>
+            <p>Company profiles, subscription-aware posting, application review, hiring, assignment completion, and worker reviews.</p>
+        </article>
+        <article class="sq-feature-card">
+            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+            <h3>Admin Portal</h3>
+            <p>User status, categories, achievements, jobs, and platform ledger visibility for operational control.</p>
+        </article>
+    </div>
+</section>
+
+<section class="sq-marketing-band">
+    <div>
+        <span class="sq-eyebrow">Backend foundation ready</span>
+        <h2>Identity, EF Core, seed data, APIs, and workflow tests are already in place.</h2>
+    </div>
+    <a class="sq-button sq-button--secondary" asp-controller="Dashboard" asp-action="Index">
+        <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+        View portal
+    </a>
+</section>

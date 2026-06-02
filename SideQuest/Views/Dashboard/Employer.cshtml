@@ -1,0 +1,183 @@
+@model EmployerDashboardViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel
+        {
+            Label = "Active Quests",
+            Value = Model.ActiveJobsCount.ToString(),
+            Detail = $"{Model.DraftJobsCount} drafts waiting",
+            Icon = "swords",
+            Accent = "primary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Applicants",
+            Value = Model.TotalApplicationsCount.ToString(),
+            Detail = "Across posted quests",
+            Icon = "groups",
+            Accent = "secondary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Active Assignments",
+            Value = Model.ActiveAssignmentsCount.ToString(),
+            Detail = "Currently in progress",
+            Icon = "assignment_turned_in",
+            Accent = "tertiary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Commission Ledger",
+            Value = Model.CommissionTotal.ToString("C"),
+            Detail = Model.SubscriptionName,
+            Icon = "payments",
+            Accent = "primary"
+        }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Employer Portal",
+    Title = Model.NeedsCompanyProfile ? "Company HQ setup" : Model.CompanyName,
+    Subtitle = Model.NeedsCompanyProfile
+        ? "Create a company profile before posting and managing quests."
+        : $"Welcome back, {Model.DisplayName}. Track posted quests, applicants, and active workers."
+})" />
+
+@if (Model.NeedsCompanyProfile)
+{
+    <section class="sq-panel sq-onboarding-panel">
+        @* Placeholder: MVC company profile editing is planned for the next UI milestone; the API already exists. *@
+        <span class="material-symbols-outlined" aria-hidden="true">business</span>
+        <h2>Company profile required</h2>
+        <p>Your company dashboard will fill with jobs, applicants, and assignments once a profile exists.</p>
+        <button class="sq-button sq-button--ghost" type="button" disabled>Company profile page coming next</button>
+    </section>
+}
+else
+{
+    <section class="sq-stat-grid sq-stat-grid--four">
+        @foreach (var stat in stats)
+        {
+            <partial name="_StatCard" model="stat" />
+        }
+    </section>
+
+    <section class="sq-dashboard-grid">
+        <div class="sq-dashboard-main">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Quest Pipeline</span>
+                    <h2>Your Recent Quests</h2>
+                </div>
+            </div>
+
+            @if (Model.RecentJobs.Count == 0)
+            {
+                <div class="sq-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">post_add</span>
+                    <h3>No company quests yet</h3>
+                    <p>Posted jobs will appear here once your team starts publishing quests.</p>
+                </div>
+            }
+            else
+            {
+                <div class="sq-quest-list">
+                    @foreach (var job in Model.RecentJobs)
+                    {
+                        <article class="sq-quest-card">
+                            <div class="sq-quest-card__top">
+                                <span class="sq-badge">@job.CategoryName</span>
+                                <strong>@job.RewardLabel</strong>
+                            </div>
+                            <h3>@job.Title</h3>
+                            <p>@job.Status · @job.AcceptedWorkers/@job.WorkersNeeded workers accepted</p>
+                            <div class="sq-progress sq-progress--compact">
+                                <div class="sq-progress__track">
+                                    <span style="width: @(job.WorkersNeeded == 0 ? 0 : Math.Min(100, job.AcceptedWorkers * 100 / job.WorkersNeeded))%"></span>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+            <div class="sq-panel">
+                <div class="sq-section-heading">
+                    <div>
+                        <span class="sq-eyebrow">Applications</span>
+                        <h2>Latest Applicants</h2>
+                    </div>
+                </div>
+                @if (Model.RecentApplications.Count == 0)
+                {
+                    <div class="sq-compact-empty">Applications for your jobs will show up here.</div>
+                }
+                else
+                {
+                    <div class="sq-table-wrap">
+                        <table class="sq-table">
+                            <thead>
+                                <tr>
+                                    <th>Quest</th>
+                                    <th>Company</th>
+                                    <th>Status</th>
+                                    <th>Applied</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var application in Model.RecentApplications)
+                                {
+                                    <tr>
+                                        <td>@application.JobTitle</td>
+                                        <td>@application.CompanyName</td>
+                                        <td><span class="sq-status">@application.Status</span></td>
+                                        <td>@application.AppliedAt.ToLocalTime().ToString("MMM d")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <aside class="sq-dashboard-side">
+            <div class="sq-panel">
+                <div class="sq-section-heading">
+                    <div>
+                        <span class="sq-eyebrow">Squad</span>
+                        <h2>Active Assignments</h2>
+                    </div>
+                </div>
+                @if (Model.ActiveAssignments.Count == 0)
+                {
+                    <div class="sq-compact-empty">Accepted workers will appear here.</div>
+                }
+                else
+                {
+                    <div class="sq-feed-list">
+                        @foreach (var assignment in Model.ActiveAssignments)
+                        {
+                            <article class="sq-feed-item">
+                                <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">person_check</span>
+                                <div>
+                                    <h3>@assignment.WorkerName</h3>
+                                    <p>@assignment.JobTitle · @assignment.AgreedRate.ToString("C")</p>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="sq-panel sq-plan-card">
+                <span class="sq-eyebrow">Subscription</span>
+                <h2>@Model.SubscriptionName</h2>
+                <p>Subscription limits are enforced by the backend when quests are published.</p>
+            </div>
+        </aside>
+    </section>
+}

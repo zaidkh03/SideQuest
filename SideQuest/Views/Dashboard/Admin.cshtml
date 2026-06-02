@@ -1,0 +1,173 @@
+@model AdminDashboardViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel
+        {
+            Label = "Total Users",
+            Value = Model.TotalUsers.ToString(),
+            Detail = $"{Model.TotalWorkers} workers · {Model.TotalEmployers} employers",
+            Icon = "group",
+            Accent = "primary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Open Quests",
+            Value = Model.OpenJobs.ToString(),
+            Detail = $"{Model.TotalJobs} total jobs",
+            Icon = "task",
+            Accent = "secondary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Reference Data",
+            Value = Model.CategoryCount.ToString(),
+            Detail = $"{Model.AchievementCount} achievements",
+            Icon = "category",
+            Accent = "tertiary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Commissions",
+            Value = Model.PlatformCommissionTotal.ToString("C"),
+            Detail = "Completed assignment ledger",
+            Icon = "payments",
+            Accent = "primary"
+        }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Admin Portal",
+    Title = "Command Center",
+    Subtitle = "Monitor users, quests, platform reference data, and financial activity."
+})" />
+
+<section class="sq-stat-grid sq-stat-grid--four">
+    @foreach (var stat in stats)
+    {
+        <partial name="_StatCard" model="stat" />
+    }
+</section>
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Users</span>
+                    <h2>Recent Accounts</h2>
+                </div>
+            </div>
+            @if (Model.RecentUsers.Count == 0)
+            {
+                <div class="sq-compact-empty">New users will appear here.</div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Roles</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.RecentUsers)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@user.FullName</strong>
+                                        <span>@user.Email</span>
+                                    </td>
+                                    <td>
+                                        @if (user.Roles.Count == 0)
+                                        {
+                                            <span class="sq-status">Unassigned</span>
+                                        }
+                                        else
+                                        {
+                                            <div class="sq-chip-list sq-chip-list--compact">
+                                                @foreach (var role in user.Roles)
+                                                {
+                                                    <span class="sq-chip">@role</span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+                                    <td><span class="sq-status @(user.IsActive ? "is-success" : "is-danger")">@(user.IsActive ? "Active" : "Disabled")</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Jobs</span>
+                    <h2>Latest Quest Activity</h2>
+                </div>
+            </div>
+            @if (Model.RecentJobs.Count == 0)
+            {
+                <div class="sq-compact-empty">Posted quests will appear here.</div>
+            }
+            else
+            {
+                <div class="sq-quest-list">
+                    @foreach (var job in Model.RecentJobs)
+                    {
+                        <article class="sq-quest-card">
+                            <div class="sq-quest-card__top">
+                                <span class="sq-badge">@job.CategoryName</span>
+                                <strong>@job.Status</strong>
+                            </div>
+                            <h3>@job.Title</h3>
+                            <p>@job.CompanyName · @job.RewardLabel</p>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Operations</span>
+                    <h2>Admin Queues</h2>
+                </div>
+            </div>
+            @* Placeholder: complaint/report moderation models are not implemented yet, so this panel avoids fake report counts. *@
+            <div class="sq-feed-list">
+                <article class="sq-feed-item">
+                    <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">category</span>
+                    <div>
+                        <h3>Categories</h3>
+                        <p>@Model.CategoryCount active records are available for job organization.</p>
+                    </div>
+                </article>
+                <article class="sq-feed-item">
+                    <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                    <div>
+                        <h3>Achievements</h3>
+                        <p>@Model.AchievementCount reward records are ready for gamification.</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div class="sq-panel sq-plan-card">
+            <span class="sq-eyebrow">System Status</span>
+            <h2>Backend Ready</h2>
+            <p>Identity, EF Core, seed data, API services, and workflow tests are in place.</p>
+        </div>
+    </aside>
+</section>

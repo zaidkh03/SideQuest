@@ -1,0 +1,43 @@
+@using SideQuest.Authorization
+@{
+    var activePortal = ViewData["ActivePortal"] as string;
+
+    string LinkClass(string portal)
+    {
+        return string.Equals(activePortal, portal, StringComparison.OrdinalIgnoreCase)
+            ? "sq-mobile-nav__link is-active"
+            : "sq-mobile-nav__link";
+    }
+}
+
+<nav class="sq-mobile-nav" aria-label="Mobile portal navigation">
+    @if (User.IsInRole(SideQuestRoles.Worker))
+    {
+        <a class="@LinkClass("Worker")" asp-controller="Dashboard" asp-action="Worker">
+            <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+            <span>Worker</span>
+        </a>
+    }
+    @if (User.IsInRole(SideQuestRoles.Employer))
+    {
+        <a class="@LinkClass("Employer")" asp-controller="Dashboard" asp-action="Employer">
+            <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
+            <span>Company</span>
+        </a>
+    }
+    @if (User.IsInRole(SideQuestRoles.Admin))
+    {
+        <a class="@LinkClass("Admin")" asp-controller="Dashboard" asp-action="Admin">
+            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+            <span>Admin</span>
+        </a>
+    }
+    <a class="sq-mobile-nav__link" asp-controller="Dashboard" asp-action="Index">
+        <span class="material-symbols-outlined" aria-hidden="true">explore</span>
+        <span>Portal</span>
+    </a>
+    <a class="sq-mobile-nav__link" asp-area="Identity" asp-page="/Account/Manage/Index">
+        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        <span>Account</span>
+    </a>
+</nav>

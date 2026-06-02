@@ -1,0 +1,103 @@
+@using SideQuest.Authorization
+@{
+    var activePortal = ViewData["ActivePortal"] as string;
+    var activeNav = ViewData["ActiveNav"] as string;
+
+    string LinkClass(string portal, string nav)
+    {
+        return string.Equals(activePortal, portal, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(activeNav, nav, StringComparison.OrdinalIgnoreCase)
+            ? "sq-side-link is-active"
+            : "sq-side-link";
+    }
+}
+
+<aside class="sq-sidebar" aria-label="SideQuest portal navigation">
+    <div class="sq-sidebar__brand">
+        <a class="sq-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="sq-brand__mark material-symbols-outlined" aria-hidden="true">swords</span>
+            <span>
+                <span class="sq-brand__text">SideQuest</span>
+                <span class="sq-brand__tagline">Level up your career</span>
+            </span>
+        </a>
+    </div>
+
+    <nav class="sq-side-nav">
+        @if (User.IsInRole(SideQuestRoles.Worker))
+        {
+            <a class="@LinkClass("Worker", "Dashboard")" asp-controller="Dashboard" asp-action="Worker">
+                <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">work</span>
+                <span>Jobs</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
+                <span>Applications</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+                <span>Wallet</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                <span>Profile</span>
+            </a>
+        }
+
+        @if (User.IsInRole(SideQuestRoles.Employer))
+        {
+            <a class="@LinkClass("Employer", "Dashboard")" asp-controller="Dashboard" asp-action="Employer">
+                <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                <span>Company HQ</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+                <span>Post Quest</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">work</span>
+                <span>Jobs</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">business</span>
+                <span>Company Profile</span>
+            </a>
+        }
+
+        @if (User.IsInRole(SideQuestRoles.Admin))
+        {
+            <a class="@LinkClass("Admin", "Dashboard")" asp-controller="Dashboard" asp-action="Admin">
+                <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                <span>Command Center</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">group</span>
+                <span>Users</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">category</span>
+                <span>Categories</span>
+            </a>
+            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+                <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                <span>Achievements</span>
+            </a>
+        }
+
+        <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+            <span>Notifications</span>
+        </a>
+    </nav>
+
+    <div class="sq-sidebar__cta">
+        <a class="sq-button sq-button--primary sq-button--block" asp-controller="Dashboard" asp-action="Index">
+            <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+            Open Portal
+        </a>
+    </div>
+</aside>
