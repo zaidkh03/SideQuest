@@ -7,6 +7,14 @@ namespace SideQuest.Models
         Unavailable
     }
 
+    public enum VerificationStatus
+    {
+        Draft,
+        Submitted,
+        Approved,
+        Rejected
+    }
+
     public enum BudgetType
     {
         Fixed,

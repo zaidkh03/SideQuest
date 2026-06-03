@@ -17,6 +17,11 @@ namespace SideQuest.Services
                 Location = profile.Location,
                 HourlyRatePreference = profile.HourlyRatePreference,
                 AvailabilityStatus = profile.AvailabilityStatus,
+                VerificationStatus = profile.VerificationStatus,
+                VerificationSubmittedAt = profile.VerificationSubmittedAt,
+                VerificationReviewedAt = profile.VerificationReviewedAt,
+                VerificationRejectionReason = profile.VerificationRejectionReason,
+                VerificationRejectionMessage = profile.VerificationRejectionMessage,
                 PortfolioUrl = profile.PortfolioUrl,
                 ResumeUrl = profile.ResumeUrl,
                 ExperienceYears = profile.ExperienceYears,
@@ -51,6 +56,11 @@ namespace SideQuest.Services
                 Website = profile.Website,
                 LogoUrl = profile.LogoUrl,
                 IsVerified = profile.IsVerified,
+                VerificationStatus = profile.VerificationStatus,
+                VerificationSubmittedAt = profile.VerificationSubmittedAt,
+                VerificationReviewedAt = profile.VerificationReviewedAt,
+                VerificationRejectionReason = profile.VerificationRejectionReason,
+                VerificationRejectionMessage = profile.VerificationRejectionMessage,
                 ActiveSubscription = activeSubscription is null
                     ? null
                     : new SubscriptionSummaryResponse

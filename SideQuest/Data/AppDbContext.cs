@@ -107,6 +107,8 @@ namespace SideQuest.Data
                 entity.Property(profile => profile.AverageRating)
                     .HasPrecision(3, 2);
 
+                entity.HasIndex(profile => profile.VerificationStatus);
+
                 entity.Property(profile => profile.PortfolioUrl)
                     .HasMaxLength(500);
 
@@ -140,6 +142,8 @@ namespace SideQuest.Data
 
                 entity.Property(profile => profile.LogoUrl)
                     .HasMaxLength(500);
+
+                entity.HasIndex(profile => profile.VerificationStatus);
 
                 entity.HasOne(profile => profile.User)
                     .WithOne(user => user.CompanyProfile)

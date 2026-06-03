@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Choose Account Type";
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Verification",
+    Title = "Choose your SideQuest path",
+    Subtitle = "Worker and Company accounts both need admin approval before they can access marketplace features."
+})" />
+
+<section class="sq-onboarding-layout">
+    <a class="sq-panel sq-choice-card sq-choice-card--link" asp-action="Worker">
+        <span class="material-symbols-outlined" aria-hidden="true">engineering</span>
+        <strong>Worker</strong>
+        <small>Submit identity and residence details so the team can confirm you are eligible to work quests.</small>
+        <span class="sq-button sq-button--secondary">
+            Continue as Worker
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </span>
+    </a>
+
+    <a class="sq-panel sq-choice-card sq-choice-card--link" asp-action="Company">
+        <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
+        <strong>Company</strong>
+        <small>Submit company registration and representative details before posting quests or hiring workers.</small>
+        <span class="sq-button sq-button--primary">
+            Continue as Company
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </span>
+    </a>
+</section>
+
+<section class="sq-panel sq-plan-card">
+    <span class="sq-eyebrow">Why this step exists</span>
+    <h2>Approval keeps the marketplace trusted</h2>
+    <p>New accounts can log back in anytime. If the form is incomplete, they continue the draft. If it is submitted, they see waiting status until an admin approves or rejects the request.</p>
+</section>

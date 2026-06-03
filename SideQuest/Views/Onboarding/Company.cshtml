@@ -1,0 +1,149 @@
+@model CompanyVerificationFormViewModel
+@{
+    ViewData["Title"] = "Company Verification";
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Company Onboarding",
+    Title = "Submit company verification",
+    Subtitle = "Companies need a verified business identity before posting quests or hiring through SideQuest."
+})" />
+
+<form class="sq-verification-form" asp-action="Company" method="post">
+    <div asp-validation-summary="ModelOnly" class="sq-validation-summary" role="alert"></div>
+
+    <section class="sq-panel">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Company</span>
+                <h2>Public profile</h2>
+            </div>
+            <span class="sq-status">Admin review required</span>
+        </div>
+
+        <div class="sq-form-grid">
+            <div class="sq-field">
+                <label asp-for="CompanyName"></label>
+                <input asp-for="CompanyName" placeholder="SideQuest Labs" />
+                <span asp-validation-for="CompanyName" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Location"></label>
+                <input asp-for="Location" placeholder="Amman, Jordan" />
+                <span asp-validation-for="Location" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Website"></label>
+                <input asp-for="Website" placeholder="https://..." />
+                <span asp-validation-for="Website" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="LogoUrl"></label>
+                <input asp-for="LogoUrl" placeholder="Optional logo link" />
+                <span asp-validation-for="LogoUrl" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" rows="4" placeholder="Describe your company, industry, and the kinds of quests you expect to post."></textarea>
+                <span asp-validation-for="Description" class="sq-field-validation"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="sq-panel">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Legal</span>
+                <h2>Registration details</h2>
+            </div>
+        </div>
+
+        <div class="sq-form-grid">
+            <div class="sq-field">
+                <label asp-for="LegalCompanyName"></label>
+                <input asp-for="LegalCompanyName" placeholder="Registered legal name" />
+                <span asp-validation-for="LegalCompanyName" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="RegistrationNumber"></label>
+                <input asp-for="RegistrationNumber" placeholder="Company serial or registration number" />
+                <span asp-validation-for="RegistrationNumber" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="TaxNumber"></label>
+                <input asp-for="TaxNumber" placeholder="Optional tax ID" />
+                <span asp-validation-for="TaxNumber" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="PhoneNumber"></label>
+                <input asp-for="PhoneNumber" placeholder="+962..." />
+                <span asp-validation-for="PhoneNumber" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Address"></label>
+                <input asp-for="Address" placeholder="Registered company address" />
+                <span asp-validation-for="Address" class="sq-field-validation"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="sq-panel">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Representative</span>
+                <h2>Authorized contact</h2>
+            </div>
+        </div>
+
+        <div class="sq-form-grid">
+            <div class="sq-field">
+                <label asp-for="AuthorizedRepresentativeName"></label>
+                <input asp-for="AuthorizedRepresentativeName" placeholder="Representative full name" />
+                <span asp-validation-for="AuthorizedRepresentativeName" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="AuthorizedRepresentativeNationalId"></label>
+                <input asp-for="AuthorizedRepresentativeNationalId" placeholder="Representative national ID" />
+                <span asp-validation-for="AuthorizedRepresentativeNationalId" class="sq-field-validation"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="sq-panel">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Documents</span>
+                <h2>Review reference</h2>
+            </div>
+        </div>
+        @* MVP stores only a document reference path or link; secure file uploads can move to private blob storage later. *@
+        <div class="sq-form-grid">
+            <div class="sq-field sq-field--wide">
+                <label asp-for="VerificationDocumentPath"></label>
+                <input asp-for="VerificationDocumentPath" placeholder="Company registration document path or private review link" />
+                <span asp-validation-for="VerificationDocumentPath" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field sq-field--wide">
+                <label asp-for="VerificationNotes"></label>
+                <textarea asp-for="VerificationNotes" rows="3" placeholder="Anything the admin should know while reviewing your request."></textarea>
+                <span asp-validation-for="VerificationNotes" class="sq-field-validation"></span>
+            </div>
+        </div>
+    </section>
+
+    <div class="sq-form-actions">
+        <a class="sq-button sq-button--ghost" asp-action="Status">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+            Status
+        </a>
+        <button type="submit" class="sq-button sq-button--primary">
+            <span class="material-symbols-outlined" aria-hidden="true">send</span>
+            Submit for review
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

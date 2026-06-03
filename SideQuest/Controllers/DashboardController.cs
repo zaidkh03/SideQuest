@@ -36,7 +36,12 @@ namespace SideQuest.Controllers
                 return RedirectToAction(nameof(Employer));
             }
 
-            return RedirectToAction(nameof(Worker));
+            if (User.IsInRole(SideQuestRoles.Worker))
+            {
+                return RedirectToAction(nameof(Worker));
+            }
+
+            return RedirectToAction("Index", "Onboarding");
         }
 
         [Authorize(Roles = SideQuestRoles.Worker)]

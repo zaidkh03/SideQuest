@@ -1,0 +1,149 @@
+@model VerificationQueueViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel
+        {
+            Label = "Worker Requests",
+            Value = Model.SubmittedWorkers.ToString(),
+            Detail = "Submitted and waiting",
+            Icon = "engineering",
+            Accent = "secondary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Company Requests",
+            Value = Model.SubmittedCompanies.ToString(),
+            Detail = "Submitted and waiting",
+            Icon = "business_center",
+            Accent = "primary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Approved",
+            Value = Model.ApprovedRequests.ToString(),
+            Detail = "Verified profiles",
+            Icon = "verified",
+            Accent = "secondary"
+        },
+        new StatCardViewModel
+        {
+            Label = "Rejected",
+            Value = Model.RejectedRequests.ToString(),
+            Detail = "Closed requests",
+            Icon = "block",
+            Accent = "tertiary"
+        }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Admin Review",
+    Title = "Verification queue",
+    Subtitle = "Review submitted Worker and Company onboarding requests before portal roles are granted."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-stat-grid sq-stat-grid--four">
+    @foreach (var stat in stats)
+    {
+        <partial name="_StatCard" model="stat" />
+    }
+</section>
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Workers</span>
+                    <h2>Pending worker approvals</h2>
+                </div>
+            </div>
+
+            @if (Model.Workers.Count == 0)
+            {
+                <div class="sq-compact-empty">No worker verification requests are waiting right now.</div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>Worker</th>
+                                <th>Profile</th>
+                                <th>ID</th>
+                                <th>Submitted</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var worker in Model.Workers)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@worker.UserName</strong>
+                                        <span>@worker.Email</span>
+                                    </td>
+                                    <td>
+                                        <strong>@worker.Headline</strong>
+                                        <span>@worker.Location</span>
+                                    </td>
+                                    <td><span class="sq-status">@worker.MaskedNationalId</span></td>
+                                    <td>@(worker.SubmittedAt?.ToLocalTime().ToString("MMM d, h:mm tt") ?? "Unknown")</td>
+                                    <td>
+                                        <a class="sq-button sq-button--ghost sq-button--sm" asp-action="Worker" asp-route-id="@worker.ProfileId">
+                                            Review
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Companies</span>
+                    <h2>Pending company approvals</h2>
+                </div>
+            </div>
+
+            @if (Model.Companies.Count == 0)
+            {
+                <div class="sq-compact-empty">No company verification requests are waiting right now.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var company in Model.Companies)
+                    {
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">business_center</span>
+                            <div>
+                                <h3>@company.CompanyName</h3>
+                                <p>@company.Location · Reg @company.RegistrationNumber</p>
+                                <a class="sq-button sq-button--ghost sq-button--sm" asp-action="Company" asp-route-id="@company.ProfileId">Review</a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+</section>

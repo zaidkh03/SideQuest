@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SideQuest.Authorization;
 using SideQuest.Contracts;
 using SideQuest.Data;
 using SideQuest.Models;
@@ -23,6 +24,14 @@ namespace SideQuest.Services
         Task<ServiceResult<IReadOnlyList<AdminUserResponse>>> GetUsersAsync();
 
         Task<ServiceResult<AdminUserResponse>> UpdateUserStatusAsync(string userId, UpdateUserStatusRequest request);
+
+        Task<ServiceResult<bool>> ApproveWorkerVerificationAsync(int profileId, string adminUserId);
+
+        Task<ServiceResult<bool>> RejectWorkerVerificationAsync(int profileId, string adminUserId, string reason, string? message);
+
+        Task<ServiceResult<bool>> ApproveCompanyVerificationAsync(int profileId, string adminUserId);
+
+        Task<ServiceResult<bool>> RejectCompanyVerificationAsync(int profileId, string adminUserId, string reason, string? message);
     }
 
     public class AdminService : IAdminService
@@ -186,6 +195,119 @@ namespace SideQuest.Services
             });
         }
 
+        public async Task<ServiceResult<bool>> ApproveWorkerVerificationAsync(int profileId, string adminUserId)
+        {
+            var profile = await _context.WorkerProfiles
+                .Include(workerProfile => workerProfile.User)
+                    .ThenInclude(user => user.Wallet)
+                .Include(workerProfile => workerProfile.User)
+                    .ThenInclude(user => user.UserXP)
+                .FirstOrDefaultAsync(workerProfile => workerProfile.Id == profileId);
+
+            if (profile is null)
+            {
+                return ServiceResult<bool>.NotFound("Worker verification request was not found.");
+            }
+
+            profile.VerificationStatus = VerificationStatus.Approved;
+            profile.VerificationReviewedAt = DateTime.UtcNow;
+            profile.VerificationReviewedByAdminId = adminUserId;
+            profile.VerificationRejectionReason = null;
+            profile.VerificationRejectionMessage = null;
+            profile.User.IsActive = true;
+
+            if (profile.User.Wallet is null)
+            {
+                _context.Wallets.Add(new Wallet { UserId = profile.UserId });
+            }
+
+            if (profile.User.UserXP is null)
+            {
+                _context.UserXPs.Add(new UserXP { UserId = profile.UserId });
+            }
+
+            await EnsureRoleAsync(profile.User, SideQuestRoles.Worker);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.Success(true);
+        }
+
+        public async Task<ServiceResult<bool>> RejectWorkerVerificationAsync(int profileId, string adminUserId, string reason, string? message)
+        {
+            var profile = await _context.WorkerProfiles
+                .Include(workerProfile => workerProfile.User)
+                .FirstOrDefaultAsync(workerProfile => workerProfile.Id == profileId);
+
+            if (profile is null)
+            {
+                return ServiceResult<bool>.NotFound("Worker verification request was not found.");
+            }
+
+            profile.VerificationStatus = VerificationStatus.Rejected;
+            profile.VerificationReviewedAt = DateTime.UtcNow;
+            profile.VerificationReviewedByAdminId = adminUserId;
+            profile.VerificationRejectionReason = reason.Trim();
+            profile.VerificationRejectionMessage = string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+
+            await RemoveRoleIfPresentAsync(profile.User, SideQuestRoles.Worker);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.Success(true);
+        }
+
+        public async Task<ServiceResult<bool>> ApproveCompanyVerificationAsync(int profileId, string adminUserId)
+        {
+            var profile = await _context.CompanyProfiles
+                .Include(companyProfile => companyProfile.User)
+                .Include(companyProfile => companyProfile.CompanySubscriptions)
+                .FirstOrDefaultAsync(companyProfile => companyProfile.Id == profileId);
+
+            if (profile is null)
+            {
+                return ServiceResult<bool>.NotFound("Company verification request was not found.");
+            }
+
+            profile.VerificationStatus = VerificationStatus.Approved;
+            profile.VerificationReviewedAt = DateTime.UtcNow;
+            profile.VerificationReviewedByAdminId = adminUserId;
+            profile.VerificationRejectionReason = null;
+            profile.VerificationRejectionMessage = null;
+            profile.IsVerified = true;
+            profile.VerifiedAt = DateTime.UtcNow;
+            profile.User.IsActive = true;
+
+            await EnsureFreeSubscriptionAsync(profile);
+            await EnsureRoleAsync(profile.User, SideQuestRoles.Employer);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.Success(true);
+        }
+
+        public async Task<ServiceResult<bool>> RejectCompanyVerificationAsync(int profileId, string adminUserId, string reason, string? message)
+        {
+            var profile = await _context.CompanyProfiles
+                .Include(companyProfile => companyProfile.User)
+                .FirstOrDefaultAsync(companyProfile => companyProfile.Id == profileId);
+
+            if (profile is null)
+            {
+                return ServiceResult<bool>.NotFound("Company verification request was not found.");
+            }
+
+            profile.VerificationStatus = VerificationStatus.Rejected;
+            profile.VerificationReviewedAt = DateTime.UtcNow;
+            profile.VerificationReviewedByAdminId = adminUserId;
+            profile.VerificationRejectionReason = reason.Trim();
+            profile.VerificationRejectionMessage = string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+            profile.IsVerified = false;
+            profile.VerifiedAt = null;
+
+            await RemoveRoleIfPresentAsync(profile.User, SideQuestRoles.Employer);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.Success(true);
+        }
+
         private Task<bool> CategoryNameExistsAsync(string name, int? excludedCategoryId)
         {
             var normalized = name.Trim().ToUpperInvariant();
@@ -200,6 +322,46 @@ namespace SideQuest.Services
             return _context.Achievements.AnyAsync(achievement =>
                 achievement.Name.ToUpper() == normalized &&
                 (!excludedAchievementId.HasValue || achievement.Id != excludedAchievementId.Value));
+        }
+
+        private async Task EnsureRoleAsync(ApplicationUser user, string role)
+        {
+            if (!await _userManager.IsInRoleAsync(user, role))
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
+        }
+
+        private async Task RemoveRoleIfPresentAsync(ApplicationUser user, string role)
+        {
+            if (await _userManager.IsInRoleAsync(user, role))
+            {
+                await _userManager.RemoveFromRoleAsync(user, role);
+            }
+        }
+
+        private async Task EnsureFreeSubscriptionAsync(CompanyProfile profile)
+        {
+            if (profile.CompanySubscriptions.Any(subscription => subscription.IsActive))
+            {
+                return;
+            }
+
+            var freePlan = await _context.SubscriptionPlans
+                .FirstOrDefaultAsync(plan => plan.Name == "Free");
+
+            if (freePlan is null)
+            {
+                return;
+            }
+
+            profile.CompanySubscriptions.Add(new CompanySubscription
+            {
+                Plan = freePlan,
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddMonths(1),
+                IsActive = true
+            });
         }
     }
 }

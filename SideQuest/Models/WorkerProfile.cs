@@ -28,6 +28,44 @@ namespace SideQuest.Models
 
         public AvailabilityStatus AvailabilityStatus { get; set; }
 
+        [MaxLength(200)]
+        public string? LegalName { get; set; }
+
+        [MaxLength(100)]
+        public string? NationalId { get; set; }
+
+        [MaxLength(40)]
+        public string? PhoneNumber { get; set; }
+
+        [MaxLength(100)]
+        public string? ResidenceCountry { get; set; }
+
+        [MaxLength(120)]
+        public string? ResidenceCity { get; set; }
+
+        public DateTime? VerificationDateOfBirth { get; set; }
+
+        [MaxLength(500)]
+        public string? VerificationDocumentPath { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationNotes { get; set; }
+
+        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Draft;
+
+        public DateTime? VerificationSubmittedAt { get; set; }
+
+        public DateTime? VerificationReviewedAt { get; set; }
+
+        [MaxLength(450)]
+        public string? VerificationReviewedByAdminId { get; set; }
+
+        [MaxLength(200)]
+        public string? VerificationRejectionReason { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationRejectionMessage { get; set; }
+
         [MaxLength(500)]
         public string? PortfolioUrl { get; set; }
 

@@ -1,0 +1,144 @@
+@model WorkerVerificationReviewViewModel
+@{
+    var rejectionReasons = new[]
+    {
+        "Missing documents",
+        "Identity could not be verified",
+        "Legal eligibility issue",
+        "Security review concern",
+        "Residence information could not be verified",
+        "Other"
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Review",
+    Title = Model.UserName,
+    Subtitle = "Review worker identity, residence, and quest-readiness details before granting Worker access.",
+    ActionText = "Back to Queue",
+    ActionUrl = Url.Action("Index", "AdminVerification"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-review-layout">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Profile</span>
+                    <h2>@Model.Headline</h2>
+                </div>
+                <span class="sq-status @(Model.Status == VerificationStatus.Submitted ? "" : Model.Status == VerificationStatus.Approved ? "is-success" : "is-danger")">@Model.Status</span>
+            </div>
+            <p class="sq-muted-text">@Model.Bio</p>
+
+            <dl class="sq-detail-list">
+                <div>
+                    <dt>Email</dt>
+                    <dd>@Model.Email</dd>
+                </div>
+                <div>
+                    <dt>Location</dt>
+                    <dd>@Model.Location</dd>
+                </div>
+                <div>
+                    <dt>Submitted</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("MMM d, yyyy h:mm tt") ?? "Unknown")</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Identity</span>
+                    <h2>Verification details</h2>
+                </div>
+            </div>
+
+            <dl class="sq-detail-list">
+                <div>
+                    <dt>Legal name</dt>
+                    <dd>@Model.LegalName</dd>
+                </div>
+                <div>
+                    <dt>National ID</dt>
+                    <dd>@Model.MaskedNationalId</dd>
+                </div>
+                <div>
+                    <dt>Phone</dt>
+                    <dd>@Model.PhoneNumber</dd>
+                </div>
+                <div>
+                    <dt>Residence</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Residence) ? "Not provided" : Model.Residence)</dd>
+                </div>
+                <div>
+                    <dt>Date of birth</dt>
+                    <dd>@(Model.DateOfBirth?.ToString("MMM d, yyyy") ?? "Not provided")</dd>
+                </div>
+                <div>
+                    <dt>Document reference</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.VerificationDocumentPath) ? "Not provided" : Model.VerificationDocumentPath)</dd>
+                </div>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(Model.VerificationNotes))
+            {
+                <div class="sq-alert">
+                    <strong>Worker notes</strong>
+                    <p>@Model.VerificationNotes</p>
+                </div>
+            }
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel sq-plan-card">
+            <span class="sq-eyebrow">Decision</span>
+            <h2>Approve or reject</h2>
+            <p>Approval grants the Worker role and creates the starter wallet and XP records.</p>
+
+            @if (Model.Status == VerificationStatus.Submitted)
+            {
+                <form asp-action="ApproveWorker" asp-route-id="@Model.ProfileId" method="post">
+                    <button class="sq-button sq-button--secondary sq-button--block" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">verified</span>
+                        Approve Worker
+                    </button>
+                </form>
+
+                <form class="sq-decision-form" asp-action="RejectWorker" asp-route-id="@Model.ProfileId" method="post">
+                    <div class="sq-field">
+                        <label for="RejectionReason">Rejection reason</label>
+                        <select id="RejectionReason" name="RejectionReason" required>
+                            <option value="">Choose reason</option>
+                            @foreach (var reason in rejectionReasons)
+                            {
+                                <option value="@reason">@reason</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sq-field">
+                        <label for="RejectionMessage">Message</label>
+                        <textarea id="RejectionMessage" name="RejectionMessage" rows="4" placeholder="Optional message shown on the user's status page."></textarea>
+                    </div>
+                    <button class="sq-button sq-button--ghost sq-button--block" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                        Reject Request
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="sq-compact-empty">This request already has a final decision.</div>
+            }
+        </div>
+    </aside>
+</section>

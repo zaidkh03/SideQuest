@@ -1,0 +1,79 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create Account";
+    ViewData["Shell"] = "Marketing";
+}
+
+<section class="sq-auth-page">
+    <div class="sq-auth-hero">
+        <span class="sq-eyebrow">Join SideQuest</span>
+        <h1>Create your account</h1>
+        <p>Start with a secure login, then complete Worker or Company verification before portal access is unlocked.</p>
+        <div class="sq-auth-steps" aria-label="Registration steps">
+            <span class="is-active">1</span>
+            <span>2</span>
+            <span>3</span>
+        </div>
+    </div>
+
+    <form class="sq-panel sq-auth-form" id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+        <div asp-validation-summary="ModelOnly" class="sq-validation-summary" role="alert"></div>
+
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Account Type</span>
+                <h2>How will you use SideQuest?</h2>
+            </div>
+        </div>
+
+        <div class="sq-choice-grid">
+            <label class="sq-choice-card">
+                <input asp-for="Input.AccountType" type="radio" value="Worker" />
+                <span class="material-symbols-outlined" aria-hidden="true">engineering</span>
+                <strong>Worker</strong>
+                <small>Find quests, build XP, and get paid for approved work.</small>
+            </label>
+            <label class="sq-choice-card">
+                <input asp-for="Input.AccountType" type="radio" value="Company" />
+                <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
+                <strong>Company</strong>
+                <small>Post quests after company verification is approved.</small>
+            </label>
+        </div>
+        <span asp-validation-for="Input.AccountType" class="sq-field-validation"></span>
+
+        <div class="sq-form-grid">
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Input.FullName"></label>
+                <input asp-for="Input.FullName" autocomplete="name" placeholder="Your legal or representative name" />
+                <span asp-validation-for="Input.FullName" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" autocomplete="username" placeholder="you@example.com" />
+                <span asp-validation-for="Input.Email" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" autocomplete="new-password" placeholder="Create password" />
+                <span asp-validation-for="Input.Password" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Input.ConfirmPassword"></label>
+                <input asp-for="Input.ConfirmPassword" autocomplete="new-password" placeholder="Confirm password" />
+                <span asp-validation-for="Input.ConfirmPassword" class="sq-field-validation"></span>
+            </div>
+        </div>
+
+        <button id="registerSubmit" type="submit" class="sq-button sq-button--primary sq-button--block">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            Create account
+        </button>
+        <p class="sq-auth-switch">Already have an account? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Login</a></p>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

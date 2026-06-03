@@ -1,0 +1,61 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+    ViewData["Shell"] = "Marketing";
+}
+
+<section class="sq-auth-page sq-auth-page--login">
+    <div class="sq-auth-hero">
+        <span class="sq-eyebrow">Welcome Back</span>
+        <h1>Login to SideQuest</h1>
+        <p>Use one email and password. SideQuest routes you to onboarding, Worker, Company, or Admin based on your account state.</p>
+        <div class="sq-auth-proof">
+            <span class="sq-status is-success">Approval protected</span>
+            <span class="sq-status">Worker and Company ready</span>
+        </div>
+    </div>
+
+    <form class="sq-panel sq-auth-form" id="account" method="post">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Secure Access</span>
+                <h2>Sign in</h2>
+            </div>
+        </div>
+
+        <div asp-validation-summary="ModelOnly" class="sq-validation-summary" role="alert"></div>
+
+        <div class="sq-form-grid">
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" autocomplete="username" placeholder="you@example.com" />
+                <span asp-validation-for="Input.Email" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field sq-field--wide">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" autocomplete="current-password" placeholder="Your password" />
+                <span asp-validation-for="Input.Password" class="sq-field-validation"></span>
+            </div>
+        </div>
+
+        <label class="sq-checkline">
+            <input asp-for="Input.RememberMe" />
+            <span>@Html.DisplayNameFor(model => model.Input.RememberMe)</span>
+        </label>
+
+        <button id="login-submit" type="submit" class="sq-button sq-button--primary sq-button--block">
+            <span class="material-symbols-outlined" aria-hidden="true">login</span>
+            Login
+        </button>
+
+        <div class="sq-auth-links">
+            <a asp-page="./ForgotPassword">Forgot password?</a>
+            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create account</a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

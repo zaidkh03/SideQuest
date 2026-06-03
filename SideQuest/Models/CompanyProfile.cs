@@ -28,6 +28,48 @@ namespace SideQuest.Models
         [MaxLength(500)]
         public string? LogoUrl { get; set; }
 
+        [MaxLength(200)]
+        public string? LegalCompanyName { get; set; }
+
+        [MaxLength(100)]
+        public string? RegistrationNumber { get; set; }
+
+        [MaxLength(100)]
+        public string? TaxNumber { get; set; }
+
+        [MaxLength(200)]
+        public string? AuthorizedRepresentativeName { get; set; }
+
+        [MaxLength(100)]
+        public string? AuthorizedRepresentativeNationalId { get; set; }
+
+        [MaxLength(40)]
+        public string? PhoneNumber { get; set; }
+
+        [MaxLength(300)]
+        public string? Address { get; set; }
+
+        [MaxLength(500)]
+        public string? VerificationDocumentPath { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationNotes { get; set; }
+
+        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Draft;
+
+        public DateTime? VerificationSubmittedAt { get; set; }
+
+        public DateTime? VerificationReviewedAt { get; set; }
+
+        [MaxLength(450)]
+        public string? VerificationReviewedByAdminId { get; set; }
+
+        [MaxLength(200)]
+        public string? VerificationRejectionReason { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationRejectionMessage { get; set; }
+
         public bool IsVerified { get; set; }
 
         public DateTime? VerifiedAt { get; set; }

@@ -193,6 +193,127 @@ namespace SideQuest.Tests
             Assert.Equal(JobStatus.Open, result.Value![0].Status);
         }
 
+        [Fact]
+        public async Task Worker_Verification_Grants_Role_Only_After_Admin_Approval()
+        {
+            await using var provider = await CreateApprovalServiceProviderAsync();
+            await using var scope = provider.CreateAsyncScope();
+
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var profileService = scope.ServiceProvider.GetRequiredService<IProfileService>();
+            var adminService = scope.ServiceProvider.GetRequiredService<IAdminService>();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var worker = new ApplicationUser
+            {
+                UserName = "pending-worker@test.local",
+                Email = "pending-worker@test.local",
+                FullName = "Pending Worker"
+            };
+            Assert.True((await userManager.CreateAsync(worker, "Worker123!")).Succeeded);
+
+            var submit = await profileService.SubmitWorkerVerificationAsync(worker.Id, new SubmitWorkerVerificationRequest
+            {
+                Headline = "Event helper",
+                Bio = "Ready for short-term quests.",
+                Location = "Amman",
+                AvailabilityStatus = AvailabilityStatus.Available,
+                ExperienceYears = 2,
+                LegalName = "Pending Worker",
+                NationalId = "9876543210",
+                PhoneNumber = "+962790000000",
+                ResidenceCountry = "Jordan",
+                ResidenceCity = "Amman",
+                VerificationDateOfBirth = new DateTime(2000, 1, 1)
+            });
+
+            Assert.True(submit.Succeeded);
+            Assert.False(await userManager.IsInRoleAsync(worker, SideQuestRoles.Worker));
+            Assert.Equal(VerificationStatus.Submitted, (await context.WorkerProfiles.SingleAsync()).VerificationStatus);
+
+            var admin = new ApplicationUser
+            {
+                UserName = "approval-admin@test.local",
+                Email = "approval-admin@test.local",
+                FullName = "Approval Admin"
+            };
+            Assert.True((await userManager.CreateAsync(admin, "Admin123!")).Succeeded);
+            await userManager.AddToRoleAsync(admin, SideQuestRoles.Admin);
+
+            var profileId = await context.WorkerProfiles.Select(profile => profile.Id).SingleAsync();
+            var approval = await adminService.ApproveWorkerVerificationAsync(profileId, admin.Id);
+
+            Assert.True(approval.Succeeded);
+            Assert.True(await userManager.IsInRoleAsync(worker, SideQuestRoles.Worker));
+            Assert.Equal(VerificationStatus.Approved, (await context.WorkerProfiles.SingleAsync()).VerificationStatus);
+            Assert.True(await context.Wallets.AnyAsync(wallet => wallet.UserId == worker.Id));
+            Assert.True(await context.UserXPs.AnyAsync(xp => xp.UserId == worker.Id));
+        }
+
+        [Fact]
+        public async Task Company_Verification_Grants_Employer_Role_And_Subscription_Only_After_Approval()
+        {
+            await using var provider = await CreateApprovalServiceProviderAsync();
+            await using var scope = provider.CreateAsyncScope();
+
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var profileService = scope.ServiceProvider.GetRequiredService<IProfileService>();
+            var adminService = scope.ServiceProvider.GetRequiredService<IAdminService>();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            context.SubscriptionPlans.Add(new SubscriptionPlan
+            {
+                Name = "Free",
+                Price = 0m,
+                JobLimitPerMonth = 3,
+                CommissionRate = 12m,
+                Description = "Free plan"
+            });
+            await context.SaveChangesAsync();
+
+            var companyUser = new ApplicationUser
+            {
+                UserName = "pending-company@test.local",
+                Email = "pending-company@test.local",
+                FullName = "Pending Company Rep"
+            };
+            Assert.True((await userManager.CreateAsync(companyUser, "Company123!")).Succeeded);
+
+            var submit = await profileService.SubmitCompanyVerificationAsync(companyUser.Id, new SubmitCompanyVerificationRequest
+            {
+                CompanyName = "Pending Co",
+                Description = "A company waiting for review.",
+                Location = "Amman",
+                LegalCompanyName = "Pending Company LLC",
+                RegistrationNumber = "REG-123456",
+                AuthorizedRepresentativeName = "Pending Company Rep",
+                AuthorizedRepresentativeNationalId = "1234567890",
+                PhoneNumber = "+962780000000",
+                Address = "Amman, Jordan"
+            });
+
+            Assert.True(submit.Succeeded);
+            Assert.False(await userManager.IsInRoleAsync(companyUser, SideQuestRoles.Employer));
+            Assert.False((await context.CompanyProfiles.SingleAsync()).IsVerified);
+
+            var admin = new ApplicationUser
+            {
+                UserName = "company-admin@test.local",
+                Email = "company-admin@test.local",
+                FullName = "Company Admin"
+            };
+            Assert.True((await userManager.CreateAsync(admin, "Admin123!")).Succeeded);
+            await userManager.AddToRoleAsync(admin, SideQuestRoles.Admin);
+
+            var profileId = await context.CompanyProfiles.Select(profile => profile.Id).SingleAsync();
+            var approval = await adminService.ApproveCompanyVerificationAsync(profileId, admin.Id);
+
+            Assert.True(approval.Succeeded);
+            Assert.True(await userManager.IsInRoleAsync(companyUser, SideQuestRoles.Employer));
+            Assert.True((await context.CompanyProfiles.SingleAsync()).IsVerified);
+            Assert.True(await context.CompanySubscriptions.AnyAsync(subscription => subscription.IsActive));
+        }
+
         private static async Task<AppDbContext> CreateMarketplaceContextAsync(
             int workersNeeded = 2,
             JobStatus jobStatus = JobStatus.Open)
@@ -259,6 +380,33 @@ namespace SideQuest.Tests
 
             await context.SaveChangesAsync();
             return context;
+        }
+
+        private static async Task<ServiceProvider> CreateApprovalServiceProviderAsync()
+        {
+            var services = new ServiceCollection();
+            var databaseName = Guid.NewGuid().ToString();
+            services.AddLogging();
+            services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(databaseName));
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+            services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IAdminService, AdminService>();
+
+            var provider = services.BuildServiceProvider();
+            await using var scope = provider.CreateAsyncScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            foreach (var role in SideQuestRoles.All)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+
+            return provider;
         }
 
         private static UpsertJobRequest ValidJobRequest()

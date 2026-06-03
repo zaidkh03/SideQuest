@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SideQuest.Authorization;
 using SideQuest.Contracts;
 using SideQuest.Data;
 using SideQuest.Models;
@@ -13,22 +11,24 @@ namespace SideQuest.Services
 
         Task<ServiceResult<WorkerProfileResponse>> UpsertWorkerProfileAsync(string userId, UpsertWorkerProfileRequest request);
 
+        Task<ServiceResult<WorkerProfileResponse>> SubmitWorkerVerificationAsync(string userId, SubmitWorkerVerificationRequest request);
+
         Task<ServiceResult<WorkerProfileResponse>> UpdateWorkerSkillsAsync(string userId, UpdateWorkerSkillsRequest request);
 
         Task<ServiceResult<CompanyProfileResponse>> GetCompanyProfileAsync(string userId);
 
         Task<ServiceResult<CompanyProfileResponse>> UpsertCompanyProfileAsync(string userId, UpsertCompanyProfileRequest request);
+
+        Task<ServiceResult<CompanyProfileResponse>> SubmitCompanyVerificationAsync(string userId, SubmitCompanyVerificationRequest request);
     }
 
     public class ProfileService : IProfileService
     {
         private readonly AppDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ProfileService(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public ProfileService(AppDbContext context)
         {
             _context = context;
-            _userManager = userManager;
         }
 
         public async Task<ServiceResult<WorkerProfileResponse>> GetWorkerProfileAsync(string userId)
@@ -44,8 +44,6 @@ namespace SideQuest.Services
         public async Task<ServiceResult<WorkerProfileResponse>> UpsertWorkerProfileAsync(string userId, UpsertWorkerProfileRequest request)
         {
             var user = await _context.Users
-                .Include(applicationUser => applicationUser.Wallet)
-                .Include(applicationUser => applicationUser.UserXP)
                 .FirstOrDefaultAsync(applicationUser => applicationUser.Id == userId);
 
             if (user is null)
@@ -76,17 +74,51 @@ namespace SideQuest.Services
             profile.ExperienceYears = request.ExperienceYears;
             profile.UpdatedAt = DateTime.UtcNow;
 
-            if (user.Wallet is null)
+            await _context.SaveChangesAsync();
+
+            var savedProfile = await GetWorkerProfileQuery()
+                .FirstAsync(workerProfile => workerProfile.UserId == userId);
+
+            return ServiceResult<WorkerProfileResponse>.Success(savedProfile.ToResponse());
+        }
+
+        public async Task<ServiceResult<WorkerProfileResponse>> SubmitWorkerVerificationAsync(string userId, SubmitWorkerVerificationRequest request)
+        {
+            if (await _context.CompanyProfiles.AnyAsync(companyProfile => companyProfile.UserId == userId))
             {
-                _context.Wallets.Add(new Wallet { UserId = userId });
+                return ServiceResult<WorkerProfileResponse>.Conflict("This account is already onboarding as a company.");
             }
 
-            if (user.UserXP is null)
+            var result = await UpsertWorkerProfileAsync(userId, request);
+            if (!result.Succeeded)
             {
-                _context.UserXPs.Add(new UserXP { UserId = userId });
+                return result;
             }
 
-            await EnsureRoleAsync(user, SideQuestRoles.Worker);
+            var profile = await _context.WorkerProfiles
+                .FirstAsync(workerProfile => workerProfile.UserId == userId);
+
+            if (profile.VerificationStatus == VerificationStatus.Approved)
+            {
+                return ServiceResult<WorkerProfileResponse>.Conflict("This worker profile is already approved.");
+            }
+
+            profile.LegalName = request.LegalName.Trim();
+            profile.NationalId = request.NationalId.Trim();
+            profile.PhoneNumber = request.PhoneNumber.Trim();
+            profile.ResidenceCountry = request.ResidenceCountry.Trim();
+            profile.ResidenceCity = request.ResidenceCity.Trim();
+            profile.VerificationDateOfBirth = request.VerificationDateOfBirth;
+            profile.VerificationDocumentPath = string.IsNullOrWhiteSpace(request.VerificationDocumentPath) ? null : request.VerificationDocumentPath.Trim();
+            profile.VerificationNotes = string.IsNullOrWhiteSpace(request.VerificationNotes) ? null : request.VerificationNotes.Trim();
+            profile.VerificationStatus = VerificationStatus.Submitted;
+            profile.VerificationSubmittedAt = DateTime.UtcNow;
+            profile.VerificationReviewedAt = null;
+            profile.VerificationReviewedByAdminId = null;
+            profile.VerificationRejectionReason = null;
+            profile.VerificationRejectionMessage = null;
+            profile.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
             var savedProfile = await GetWorkerProfileQuery()
@@ -188,8 +220,53 @@ namespace SideQuest.Services
             profile.Website = string.IsNullOrWhiteSpace(request.Website) ? null : request.Website.Trim();
             profile.LogoUrl = string.IsNullOrWhiteSpace(request.LogoUrl) ? null : request.LogoUrl.Trim();
 
-            await EnsureFreeSubscriptionAsync(profile);
-            await EnsureRoleAsync(user, SideQuestRoles.Employer);
+            await _context.SaveChangesAsync();
+
+            var savedProfile = await GetCompanyProfileQuery()
+                .FirstAsync(companyProfile => companyProfile.UserId == userId);
+
+            return ServiceResult<CompanyProfileResponse>.Success(savedProfile.ToResponse());
+        }
+
+        public async Task<ServiceResult<CompanyProfileResponse>> SubmitCompanyVerificationAsync(string userId, SubmitCompanyVerificationRequest request)
+        {
+            if (await _context.WorkerProfiles.AnyAsync(workerProfile => workerProfile.UserId == userId))
+            {
+                return ServiceResult<CompanyProfileResponse>.Conflict("This account is already onboarding as a worker.");
+            }
+
+            var result = await UpsertCompanyProfileAsync(userId, request);
+            if (!result.Succeeded)
+            {
+                return result;
+            }
+
+            var profile = await _context.CompanyProfiles
+                .FirstAsync(companyProfile => companyProfile.UserId == userId);
+
+            if (profile.VerificationStatus == VerificationStatus.Approved)
+            {
+                return ServiceResult<CompanyProfileResponse>.Conflict("This company profile is already approved.");
+            }
+
+            profile.LegalCompanyName = request.LegalCompanyName.Trim();
+            profile.RegistrationNumber = request.RegistrationNumber.Trim();
+            profile.TaxNumber = string.IsNullOrWhiteSpace(request.TaxNumber) ? null : request.TaxNumber.Trim();
+            profile.AuthorizedRepresentativeName = request.AuthorizedRepresentativeName.Trim();
+            profile.AuthorizedRepresentativeNationalId = request.AuthorizedRepresentativeNationalId.Trim();
+            profile.PhoneNumber = request.PhoneNumber.Trim();
+            profile.Address = request.Address.Trim();
+            profile.VerificationDocumentPath = string.IsNullOrWhiteSpace(request.VerificationDocumentPath) ? null : request.VerificationDocumentPath.Trim();
+            profile.VerificationNotes = string.IsNullOrWhiteSpace(request.VerificationNotes) ? null : request.VerificationNotes.Trim();
+            profile.VerificationStatus = VerificationStatus.Submitted;
+            profile.VerificationSubmittedAt = DateTime.UtcNow;
+            profile.VerificationReviewedAt = null;
+            profile.VerificationReviewedByAdminId = null;
+            profile.VerificationRejectionReason = null;
+            profile.VerificationRejectionMessage = null;
+            profile.IsVerified = false;
+            profile.VerifiedAt = null;
+
             await _context.SaveChangesAsync();
 
             var savedProfile = await GetCompanyProfileQuery()
@@ -211,38 +288,6 @@ namespace SideQuest.Services
             return _context.CompanyProfiles
                 .Include(companyProfile => companyProfile.CompanySubscriptions)
                     .ThenInclude(subscription => subscription.Plan);
-        }
-
-        private async Task EnsureRoleAsync(ApplicationUser user, string role)
-        {
-            if (!await _userManager.IsInRoleAsync(user, role))
-            {
-                await _userManager.AddToRoleAsync(user, role);
-            }
-        }
-
-        private async Task EnsureFreeSubscriptionAsync(CompanyProfile profile)
-        {
-            if (profile.CompanySubscriptions.Any(subscription => subscription.IsActive))
-            {
-                return;
-            }
-
-            var freePlan = await _context.SubscriptionPlans
-                .FirstOrDefaultAsync(plan => plan.Name == "Free");
-
-            if (freePlan is null)
-            {
-                return;
-            }
-
-            profile.CompanySubscriptions.Add(new CompanySubscription
-            {
-                Plan = freePlan,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(1),
-                IsActive = true
-            });
         }
     }
 }

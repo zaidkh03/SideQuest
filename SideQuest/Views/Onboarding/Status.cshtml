@@ -1,0 +1,89 @@
+@model OnboardingStatusViewModel
+@{
+    var accountLabel = Model.AccountType == OnboardingAccountType.Company ? "Company" : "Worker";
+    var icon = Model.Status switch
+    {
+        VerificationStatus.Submitted => "hourglass_top",
+        VerificationStatus.Approved => "verified",
+        VerificationStatus.Rejected => "block",
+        _ => "edit_document"
+    };
+    var title = Model.Status switch
+    {
+        VerificationStatus.Submitted => "Your request is waiting for admin approval",
+        VerificationStatus.Approved => "Your account is approved",
+        VerificationStatus.Rejected => "Your verification was not approved",
+        _ => "Finish your verification draft"
+    };
+    var detail = Model.Status switch
+    {
+        VerificationStatus.Submitted => "You can log in anytime to check this page. Marketplace access unlocks after an admin approves your request.",
+        VerificationStatus.Approved => "Your portal access should be active. If you still see this page, contact the SideQuest team.",
+        VerificationStatus.Rejected => "You can still log in to view the decision, but marketplace features are locked for this account.",
+        _ => "Your account exists. Complete the form and submit it when you are ready for review."
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = $"{accountLabel} Verification",
+    Title = "Account status",
+    Subtitle = "This is the checkpoint between account creation and full SideQuest portal access."
+})" />
+
+<section class="sq-status-layout">
+    <article class="sq-panel sq-status-card">
+        <span class="sq-status-card__icon material-symbols-outlined" aria-hidden="true">@icon</span>
+        <span class="sq-status @(Model.Status == VerificationStatus.Rejected ? "is-danger" : Model.Status == VerificationStatus.Approved ? "is-success" : "")">@Model.Status</span>
+        <h2>@title</h2>
+        <p>@detail</p>
+
+        <dl class="sq-detail-list">
+            <div>
+                <dt>Account type</dt>
+                <dd>@accountLabel</dd>
+            </div>
+            <div>
+                <dt>Name</dt>
+                <dd>@Model.DisplayName</dd>
+            </div>
+            <div>
+                <dt>Submitted</dt>
+                <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("MMM d, yyyy h:mm tt") ?? "Not submitted yet")</dd>
+            </div>
+            <div>
+                <dt>Reviewed</dt>
+                <dd>@(Model.ReviewedAt?.ToLocalTime().ToString("MMM d, yyyy h:mm tt") ?? "Not reviewed yet")</dd>
+            </div>
+        </dl>
+
+        @if (Model.Status == VerificationStatus.Rejected)
+        {
+            <div class="sq-alert sq-alert--danger">
+                <strong>@(string.IsNullOrWhiteSpace(Model.RejectionReason) ? "Request rejected" : Model.RejectionReason)</strong>
+                <p>@(string.IsNullOrWhiteSpace(Model.RejectionMessage) ? "The admin did not approve this registration request." : Model.RejectionMessage)</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.ContinueAction))
+        {
+            <a class="sq-button sq-button--primary" asp-action="@Model.ContinueAction">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                Continue draft
+            </a>
+        }
+        else if (Model.Status == VerificationStatus.Submitted)
+        {
+            <a class="sq-button sq-button--ghost" asp-controller="Home" asp-action="Index">
+                <span class="material-symbols-outlined" aria-hidden="true">home</span>
+                Back home
+            </a>
+        }
+    </article>
+
+    <aside class="sq-panel sq-plan-card">
+        <span class="sq-eyebrow">Next</span>
+        <h2>What happens after review?</h2>
+        <p>Approved Worker accounts receive the Worker role and can apply to quests. Approved Company accounts receive the Employer role, verification badge, and starter subscription access.</p>
+    </aside>
+</section>

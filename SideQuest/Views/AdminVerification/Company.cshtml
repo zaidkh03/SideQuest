@@ -1,0 +1,168 @@
+@model CompanyVerificationReviewViewModel
+@{
+    var rejectionReasons = new[]
+    {
+        "Missing documents",
+        "Company registration could not be verified",
+        "Representative identity could not be verified",
+        "Legal eligibility issue",
+        "Security review concern",
+        "Other"
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Company Review",
+    Title = Model.CompanyName,
+    Subtitle = "Review business registration and representative details before granting Employer access.",
+    ActionText = "Back to Queue",
+    ActionUrl = Url.Action("Index", "AdminVerification"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-review-layout">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Company</span>
+                    <h2>@Model.LegalCompanyName</h2>
+                </div>
+                <span class="sq-status @(Model.Status == VerificationStatus.Submitted ? "" : Model.Status == VerificationStatus.Approved ? "is-success" : "is-danger")">@Model.Status</span>
+            </div>
+            <p class="sq-muted-text">@Model.Description</p>
+
+            <dl class="sq-detail-list">
+                <div>
+                    <dt>Public name</dt>
+                    <dd>@Model.CompanyName</dd>
+                </div>
+                <div>
+                    <dt>Email</dt>
+                    <dd>@Model.Email</dd>
+                </div>
+                <div>
+                    <dt>Location</dt>
+                    <dd>@Model.Location</dd>
+                </div>
+                <div>
+                    <dt>Website</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Website) ? "Not provided" : Model.Website)</dd>
+                </div>
+                <div>
+                    <dt>Submitted</dt>
+                    <dd>@(Model.SubmittedAt?.ToLocalTime().ToString("MMM d, yyyy h:mm tt") ?? "Unknown")</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Legal</span>
+                    <h2>Registration details</h2>
+                </div>
+            </div>
+
+            <dl class="sq-detail-list">
+                <div>
+                    <dt>Registration number</dt>
+                    <dd>@Model.RegistrationNumber</dd>
+                </div>
+                <div>
+                    <dt>Tax ID</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.TaxNumber) ? "Not provided" : Model.TaxNumber)</dd>
+                </div>
+                <div>
+                    <dt>Address</dt>
+                    <dd>@Model.Address</dd>
+                </div>
+                <div>
+                    <dt>Phone</dt>
+                    <dd>@Model.PhoneNumber</dd>
+                </div>
+                <div>
+                    <dt>Document reference</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.VerificationDocumentPath) ? "Not provided" : Model.VerificationDocumentPath)</dd>
+                </div>
+            </dl>
+        </article>
+
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Representative</span>
+                    <h2>@Model.AuthorizedRepresentativeName</h2>
+                </div>
+            </div>
+
+            <dl class="sq-detail-list">
+                <div>
+                    <dt>Representative national ID</dt>
+                    <dd>@Model.MaskedRepresentativeNationalId</dd>
+                </div>
+                <div>
+                    <dt>Account owner</dt>
+                    <dd>@Model.UserName</dd>
+                </div>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(Model.VerificationNotes))
+            {
+                <div class="sq-alert">
+                    <strong>Company notes</strong>
+                    <p>@Model.VerificationNotes</p>
+                </div>
+            }
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel sq-plan-card">
+            <span class="sq-eyebrow">Decision</span>
+            <h2>Approve or reject</h2>
+            <p>Approval grants the Employer role, marks the company verified, and creates the starter subscription.</p>
+
+            @if (Model.Status == VerificationStatus.Submitted)
+            {
+                <form asp-action="ApproveCompany" asp-route-id="@Model.ProfileId" method="post">
+                    <button class="sq-button sq-button--secondary sq-button--block" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">verified</span>
+                        Approve Company
+                    </button>
+                </form>
+
+                <form class="sq-decision-form" asp-action="RejectCompany" asp-route-id="@Model.ProfileId" method="post">
+                    <div class="sq-field">
+                        <label for="RejectionReason">Rejection reason</label>
+                        <select id="RejectionReason" name="RejectionReason" required>
+                            <option value="">Choose reason</option>
+                            @foreach (var reason in rejectionReasons)
+                            {
+                                <option value="@reason">@reason</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sq-field">
+                        <label for="RejectionMessage">Message</label>
+                        <textarea id="RejectionMessage" name="RejectionMessage" rows="4" placeholder="Optional message shown on the user's status page."></textarea>
+                    </div>
+                    <button class="sq-button sq-button--ghost sq-button--block" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                        Reject Request
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="sq-compact-empty">This request already has a final decision.</div>
+            }
+        </div>
+    </aside>
+</section>

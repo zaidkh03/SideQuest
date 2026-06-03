@@ -22,7 +22,7 @@ namespace SideQuest.Contracts
         public bool HasWallet { get; set; }
     }
 
-    public sealed class UpsertWorkerProfileRequest
+    public class UpsertWorkerProfileRequest
     {
         [Required]
         [MaxLength(200)]
@@ -50,6 +50,40 @@ namespace SideQuest.Contracts
         public int ExperienceYears { get; set; }
     }
 
+    public sealed class SubmitWorkerVerificationRequest : UpsertWorkerProfileRequest
+    {
+        [Required]
+        [MaxLength(200)]
+        public string LegalName { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string NationalId { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [MaxLength(40)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string ResidenceCountry { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(120)]
+        public string ResidenceCity { get; set; } = string.Empty;
+
+        [Required]
+        [DataType(DataType.Date)]
+        public DateTime? VerificationDateOfBirth { get; set; }
+
+        [MaxLength(500)]
+        public string? VerificationDocumentPath { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationNotes { get; set; }
+    }
+
     public sealed class WorkerProfileResponse
     {
         public int Id { get; set; }
@@ -67,6 +101,16 @@ namespace SideQuest.Contracts
         public decimal? HourlyRatePreference { get; set; }
 
         public AvailabilityStatus AvailabilityStatus { get; set; }
+
+        public VerificationStatus VerificationStatus { get; set; }
+
+        public DateTime? VerificationSubmittedAt { get; set; }
+
+        public DateTime? VerificationReviewedAt { get; set; }
+
+        public string? VerificationRejectionReason { get; set; }
+
+        public string? VerificationRejectionMessage { get; set; }
 
         public string? PortfolioUrl { get; set; }
 
@@ -105,7 +149,7 @@ namespace SideQuest.Contracts
         public int SkillLevel { get; set; }
     }
 
-    public sealed class UpsertCompanyProfileRequest
+    public class UpsertCompanyProfileRequest
     {
         [Required]
         [MaxLength(200)]
@@ -125,6 +169,43 @@ namespace SideQuest.Contracts
         public string? LogoUrl { get; set; }
     }
 
+    public sealed class SubmitCompanyVerificationRequest : UpsertCompanyProfileRequest
+    {
+        [Required]
+        [MaxLength(200)]
+        public string LegalCompanyName { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string RegistrationNumber { get; set; } = string.Empty;
+
+        [MaxLength(100)]
+        public string? TaxNumber { get; set; }
+
+        [Required]
+        [MaxLength(200)]
+        public string AuthorizedRepresentativeName { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(100)]
+        public string AuthorizedRepresentativeNationalId { get; set; } = string.Empty;
+
+        [Required]
+        [Phone]
+        [MaxLength(40)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(300)]
+        public string Address { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? VerificationDocumentPath { get; set; }
+
+        [MaxLength(1000)]
+        public string? VerificationNotes { get; set; }
+    }
+
     public sealed class CompanyProfileResponse
     {
         public int Id { get; set; }
@@ -142,6 +223,16 @@ namespace SideQuest.Contracts
         public string? LogoUrl { get; set; }
 
         public bool IsVerified { get; set; }
+
+        public VerificationStatus VerificationStatus { get; set; }
+
+        public DateTime? VerificationSubmittedAt { get; set; }
+
+        public DateTime? VerificationReviewedAt { get; set; }
+
+        public string? VerificationRejectionReason { get; set; }
+
+        public string? VerificationRejectionMessage { get; set; }
 
         public SubscriptionSummaryResponse? ActiveSubscription { get; set; }
     }

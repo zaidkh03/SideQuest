@@ -1,6 +1,9 @@
 @using SideQuest.Authorization
 @{
     var activePortal = ViewData["ActivePortal"] as string;
+    var hasPortalRole = User.IsInRole(SideQuestRoles.Worker)
+        || User.IsInRole(SideQuestRoles.Employer)
+        || User.IsInRole(SideQuestRoles.Admin);
 
     string LinkClass(string portal)
     {
@@ -30,6 +33,17 @@
         <a class="@LinkClass("Admin")" asp-controller="Dashboard" asp-action="Admin">
             <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
             <span>Admin</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="AdminVerification" asp-action="Index">
+            <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
+            <span>Review</span>
+        </a>
+    }
+    @if (!hasPortalRole)
+    {
+        <a class="@LinkClass("Onboarding")" asp-controller="Onboarding" asp-action="Index">
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+            <span>Status</span>
         </a>
     }
     <a class="sq-mobile-nav__link" asp-controller="Dashboard" asp-action="Index">

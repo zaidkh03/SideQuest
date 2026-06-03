@@ -2,6 +2,9 @@
 @{
     var activePortal = ViewData["ActivePortal"] as string;
     var activeNav = ViewData["ActiveNav"] as string;
+    var hasPortalRole = User.IsInRole(SideQuestRoles.Worker)
+        || User.IsInRole(SideQuestRoles.Employer)
+        || User.IsInRole(SideQuestRoles.Admin);
 
     string LinkClass(string portal, string nav)
     {
@@ -74,6 +77,10 @@
                 <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
                 <span>Command Center</span>
             </a>
+            <a class="@LinkClass("Admin", "Verifications")" asp-controller="AdminVerification" asp-action="Index">
+                <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
+                <span>Verifications</span>
+            </a>
             <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
                 <span class="material-symbols-outlined" aria-hidden="true">group</span>
                 <span>Users</span>
@@ -85,6 +92,14 @@
             <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
                 <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
                 <span>Achievements</span>
+            </a>
+        }
+
+        @if (!hasPortalRole)
+        {
+            <a class="@LinkClass("Onboarding", "Verification")" asp-controller="Onboarding" asp-action="Index">
+                <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                <span>Verification</span>
             </a>
         }
 
