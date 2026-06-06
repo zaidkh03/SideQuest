@@ -1,0 +1,66 @@
+@model WorkerApplicationsPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Portal",
+    Title = "Applications",
+    Subtitle = "Track every quest application and withdraw pending applications when plans change."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-panel">
+    @if (Model.Applications.Count == 0)
+    {
+        <div class="sq-empty-state">
+            <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
+            <h3>No applications yet</h3>
+            <p>Applications you submit from the quest board will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sq-table-wrap">
+            <table class="sq-table">
+                <thead>
+                    <tr>
+                        <th>Quest</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Applied</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var application in Model.Applications)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@application.JobTitle</strong>
+                                <span>@(application.CoverLetter.Length > 90 ? $"{application.CoverLetter[..90]}..." : application.CoverLetter)</span>
+                            </td>
+                            <td>@application.CompanyName</td>
+                            <td><span class="sq-status @(application.Status == ApplicationStatus.Accepted ? "is-success" : application.Status == ApplicationStatus.Rejected ? "is-danger" : "")">@application.Status</span></td>
+                            <td>@application.AppliedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
+                            <td>
+                                @if (application.Status == ApplicationStatus.Pending)
+                                {
+                                    <form asp-action="Withdraw" asp-route-id="@application.Id" method="post">
+                                        <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Withdraw</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

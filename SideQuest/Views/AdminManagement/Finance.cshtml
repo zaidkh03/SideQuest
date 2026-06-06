@@ -1,0 +1,53 @@
+@model AdminFinancePageViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel { Label = "Commissions", Value = Model.PlatformCommissionTotal.ToString("C"), Detail = "Platform ledger", Icon = "payments", Accent = "primary" },
+        new StatCardViewModel { Label = "Worker Earnings", Value = Model.CompletedEarningsTotal.ToString("C"), Detail = "Completed earnings", Icon = "account_balance_wallet", Accent = "secondary" },
+        new StatCardViewModel { Label = "Pending Withdrawals", Value = Model.PendingWithdrawalsTotal.ToString("C"), Detail = "Awaiting payout", Icon = "account_balance", Accent = "tertiary" }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Admin Portal",
+    Title = "Finance",
+    Subtitle = "Review platform commissions, worker earnings, and withdrawal requests."
+})" />
+
+<section class="sq-stat-grid">
+    @foreach (var stat in stats)
+    {
+        <partial name="_StatCard" model="stat" />
+    }
+</section>
+
+<section class="sq-panel">
+    <div class="sq-table-wrap">
+        <table class="sq-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Job</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transaction in Model.Transactions)
+                {
+                    <tr>
+                        <td>@transaction.UserName</td>
+                        <td>@(transaction.JobTitle ?? "Account transaction")</td>
+                        <td>@transaction.Type</td>
+                        <td>@transaction.Amount.ToString("C")</td>
+                        <td><span class="sq-status @(transaction.Status == TransactionStatus.Completed ? "is-success" : transaction.Status == TransactionStatus.Failed ? "is-danger" : "")">@transaction.Status</span></td>
+                        <td>@transaction.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

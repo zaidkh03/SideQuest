@@ -194,7 +194,11 @@ namespace SideQuest.ViewModels
 
         public string MaskedNationalId { get; set; } = string.Empty;
 
+        public VerificationStatus Status { get; set; }
+
         public DateTime? SubmittedAt { get; set; }
+
+        public DateTime? ReviewedAt { get; set; }
     }
 
     public sealed class CompanyVerificationQueueItemViewModel
@@ -211,7 +215,11 @@ namespace SideQuest.ViewModels
 
         public string Location { get; set; } = string.Empty;
 
+        public VerificationStatus Status { get; set; }
+
         public DateTime? SubmittedAt { get; set; }
+
+        public DateTime? ReviewedAt { get; set; }
     }
 
     public sealed class WorkerVerificationReviewViewModel

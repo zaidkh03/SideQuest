@@ -1,0 +1,55 @@
+@model EmployerJobsPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Employer Portal",
+    Title = "Company jobs",
+    Subtitle = "Manage drafts, published quests, applicants, assignments, and closeout.",
+    ActionText = "Post Quest",
+    ActionUrl = Url.Action("CreateJob", "Employer"),
+    ActionIcon = "add"
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+@if (Model.Jobs.Count == 0)
+{
+    <div class="sq-empty-state">
+        <span class="material-symbols-outlined" aria-hidden="true">post_add</span>
+        <h3>No jobs yet</h3>
+        <p>Create a draft quest, then publish it when it is ready for workers.</p>
+        <a class="sq-button sq-button--primary" asp-action="CreateJob">Post first quest</a>
+    </div>
+}
+else
+{
+    <section class="sq-quest-list sq-quest-list--cards">
+        @foreach (var job in Model.Jobs)
+        {
+            <article class="sq-quest-card">
+                <div class="sq-quest-card__top">
+                    <span class="sq-badge">@job.CategoryName</span>
+                    <strong>@job.Status</strong>
+                </div>
+                <h3>@job.Title</h3>
+                <p>@job.RewardLabel · @job.AcceptedWorkers/@job.WorkersNeeded accepted</p>
+                <div class="sq-progress sq-progress--compact">
+                    <div class="sq-progress__track">
+                        <span style="width: @(job.WorkersNeeded == 0 ? 0 : Math.Min(100, job.AcceptedWorkers * 100 / job.WorkersNeeded))%"></span>
+                    </div>
+                </div>
+                <div class="sq-card-actions">
+                    <a class="sq-button sq-button--ghost sq-button--sm" asp-action="Details" asp-route-id="@job.Id">Manage</a>
+                    <a class="sq-button sq-button--ghost sq-button--sm" asp-action="EditJob" asp-route-id="@job.Id">Edit</a>
+                </div>
+            </article>
+        }
+    </section>
+}

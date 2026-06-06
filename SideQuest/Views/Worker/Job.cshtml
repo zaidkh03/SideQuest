@@ -1,0 +1,77 @@
+@model WorkerJobDetailViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Quest Details",
+    Title = Model.Job.Title,
+    Subtitle = $"{Model.Job.CompanyName} · {Model.Job.CategoryName}",
+    ActionText = "Back to Jobs",
+    ActionUrl = Url.Action("Jobs", "Worker"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">@Model.Job.CategoryName</span>
+                    <h2>@Model.Job.Title</h2>
+                </div>
+                <span class="sq-status">@Model.Job.Status</span>
+            </div>
+            <p class="sq-muted-text">@Model.Job.Description</p>
+            <dl class="sq-detail-list">
+                <div><dt>Company</dt><dd>@Model.Job.CompanyName</dd></div>
+                <div><dt>Reward</dt><dd>@Model.Job.RewardLabel</dd></div>
+                <div><dt>Workers</dt><dd>@Model.Job.AcceptedWorkers/@Model.Job.WorkersNeeded accepted</dd></div>
+                <div><dt>Timeline</dt><dd>@Model.Job.StartDate.ToLocalTime().ToString("MMM d, yyyy") - @Model.Job.EndDate.ToLocalTime().ToString("MMM d, yyyy")</dd></div>
+            </dl>
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel sq-plan-card">
+            <span class="sq-eyebrow">Application</span>
+            @if (Model.HasApplied)
+            {
+                <h2>@Model.ApplicationStatus</h2>
+                <p>Your application status for this quest is listed above.</p>
+                <a class="sq-button sq-button--ghost sq-button--block" asp-action="Applications">View applications</a>
+            }
+            else if (Model.CanApply)
+            {
+                <h2>Apply now</h2>
+                <form asp-action="Apply" asp-route-id="@Model.Job.Id" method="post">
+                    <div class="sq-field">
+                        <label asp-for="ApplyForm.CoverLetter"></label>
+                        <textarea asp-for="ApplyForm.CoverLetter" name="CoverLetter" rows="6" placeholder="Share why you are a good fit."></textarea>
+                        <span asp-validation-for="ApplyForm.CoverLetter" class="sq-field-validation"></span>
+                    </div>
+                    <button class="sq-button sq-button--primary sq-button--block" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                        Submit application
+                    </button>
+                </form>
+            }
+            else
+            {
+                <h2>Applications closed</h2>
+                <p>This quest is not currently accepting new applications.</p>
+            }
+        </div>
+    </aside>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

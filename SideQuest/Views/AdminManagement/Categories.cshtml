@@ -1,0 +1,73 @@
+@model CategoryAdminPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Admin Portal",
+    Title = "Categories",
+    Subtitle = "Manage the job categories employers choose when posting quests."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <div class="sq-panel">
+            <div class="sq-table-wrap">
+                <table class="sq-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <tr>
+                                <td><strong>@category.Name</strong></td>
+                                <td>@category.Description</td>
+                                <td><span class="sq-status @(category.IsActive ? "is-success" : "is-danger")">@(category.IsActive ? "Active" : "Inactive")</span></td>
+                                <td><a class="sq-button sq-button--ghost sq-button--sm" asp-action="Categories" asp-route-editId="@category.Id">Edit</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <aside class="sq-dashboard-side">
+        <form class="sq-panel sq-plan-card" asp-action="SaveCategory" method="post">
+            <input asp-for="Form.Id" type="hidden" name="Id" />
+            <span class="sq-eyebrow">@(Model.Form.Id.HasValue ? "Edit" : "Create")</span>
+            <h2>Category</h2>
+            <div class="sq-field">
+                <label asp-for="Form.Name"></label>
+                <input asp-for="Form.Name" name="Name" />
+                <span asp-validation-for="Form.Name" class="sq-field-validation"></span>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Form.Description"></label>
+                <textarea asp-for="Form.Description" name="Description" rows="4"></textarea>
+                <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
+            </div>
+            <label class="sq-checkline">
+                <input asp-for="Form.IsActive" name="IsActive" />
+                <span>Active</span>
+            </label>
+            <button class="sq-button sq-button--primary sq-button--block" type="submit">Save category</button>
+        </form>
+    </aside>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,80 @@
+@model CommunityIndexViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Community",
+    Title = "Community board",
+    Subtitle = "Share events, volunteer opportunities, announcements, and discussions with the SideQuest network."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        @if (Model.Posts.Count == 0)
+        {
+            <div class="sq-empty-state">
+                <span class="material-symbols-outlined" aria-hidden="true">forum</span>
+                <h3>No community posts yet</h3>
+                <p>Create the first post for workers, employers, and admins to discuss.</p>
+            </div>
+        }
+        else
+        {
+            <div class="sq-feed-list">
+                @foreach (var post in Model.Posts)
+                {
+                    <article class="sq-panel sq-community-post">
+                        <div class="sq-section-heading">
+                            <div>
+                                <span class="sq-eyebrow">@post.Type</span>
+                                <h2>@post.Title</h2>
+                            </div>
+                            <span class="sq-status">@post.CommentCount comments</span>
+                        </div>
+                        <p class="sq-muted-text">@post.ContentPreview</p>
+                        <div class="sq-quest-card__meta">
+                            <span>@post.AuthorName</span>
+                            <span>@post.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</span>
+                        </div>
+                        <a class="sq-button sq-button--ghost" asp-action="Details" asp-route-id="@post.Id">Open discussion</a>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <form class="sq-panel sq-plan-card" asp-action="Create" method="post">
+            <span class="sq-eyebrow">Create</span>
+            <h2>New post</h2>
+            <div class="sq-field">
+                <label asp-for="Form.Type"></label>
+                <select asp-for="Form.Type" name="Type" asp-items="Html.GetEnumSelectList<CommunityPostType>()"></select>
+            </div>
+            <div class="sq-field">
+                <label asp-for="Form.Title"></label>
+                <input asp-for="Form.Title" name="Title" />
+            </div>
+            <div class="sq-field">
+                <label asp-for="Form.Content"></label>
+                <textarea asp-for="Form.Content" name="Content" rows="6"></textarea>
+            </div>
+            <button class="sq-button sq-button--primary sq-button--block" type="submit">
+                <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                Publish
+            </button>
+        </form>
+    </aside>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

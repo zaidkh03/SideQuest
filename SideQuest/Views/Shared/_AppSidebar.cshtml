@@ -33,19 +33,23 @@
                 <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Worker", "Jobs")" asp-controller="Worker" asp-action="Jobs">
                 <span class="material-symbols-outlined" aria-hidden="true">work</span>
                 <span>Jobs</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Worker", "Applications")" asp-controller="Worker" asp-action="Applications">
                 <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
                 <span>Applications</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Worker", "Assignments")" asp-controller="Worker" asp-action="Assignments">
+                <span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                <span>Quest Log</span>
+            </a>
+            <a class="@LinkClass("Worker", "Wallet")" asp-controller="Worker" asp-action="Wallet">
                 <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
                 <span>Wallet</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Worker", "Profile")" asp-controller="Profile" asp-action="Index">
                 <span class="material-symbols-outlined" aria-hidden="true">person</span>
                 <span>Profile</span>
             </a>
@@ -57,17 +61,21 @@
                 <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
                 <span>Company HQ</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Employer", "PostQuest")" asp-controller="Employer" asp-action="CreateJob">
                 <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
                 <span>Post Quest</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Employer", "Jobs")" asp-controller="Employer" asp-action="Jobs">
                 <span class="material-symbols-outlined" aria-hidden="true">work</span>
                 <span>Jobs</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Employer", "Company")" asp-controller="Employer" asp-action="Company">
                 <span class="material-symbols-outlined" aria-hidden="true">business</span>
                 <span>Company Profile</span>
+            </a>
+            <a class="@LinkClass("Employer", "Profile")" asp-controller="Profile" asp-action="Index">
+                <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                <span>Profile</span>
             </a>
         }
 
@@ -81,17 +89,25 @@
                 <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
                 <span>Verifications</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Admin", "Users")" asp-controller="AdminManagement" asp-action="Users">
                 <span class="material-symbols-outlined" aria-hidden="true">group</span>
                 <span>Users</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Admin", "Categories")" asp-controller="AdminManagement" asp-action="Categories">
                 <span class="material-symbols-outlined" aria-hidden="true">category</span>
                 <span>Categories</span>
             </a>
-            <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+            <a class="@LinkClass("Admin", "Achievements")" asp-controller="AdminManagement" asp-action="Achievements">
                 <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
                 <span>Achievements</span>
+            </a>
+            <a class="@LinkClass("Admin", "Jobs")" asp-controller="AdminManagement" asp-action="Jobs">
+                <span class="material-symbols-outlined" aria-hidden="true">work</span>
+                <span>Jobs</span>
+            </a>
+            <a class="@LinkClass("Admin", "Finance")" asp-controller="AdminManagement" asp-action="Finance">
+                <span class="material-symbols-outlined" aria-hidden="true">payments</span>
+                <span>Finance</span>
             </a>
         }
 
@@ -103,7 +119,11 @@
             </a>
         }
 
-        <a class="sq-side-link sq-side-link--soon" href="#" aria-disabled="true">
+        <a class="@LinkClass(activePortal ?? "Onboarding", "Community")" asp-controller="Community" asp-action="Index">
+            <span class="material-symbols-outlined" aria-hidden="true">forum</span>
+            <span>Community</span>
+        </a>
+        <a class="@LinkClass(activePortal ?? "Onboarding", "Notifications")" asp-controller="Notifications" asp-action="Index">
             <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
             <span>Notifications</span>
         </a>

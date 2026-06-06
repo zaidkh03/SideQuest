@@ -72,7 +72,7 @@
                 <span class="sq-eyebrow">Quest Board</span>
                 <h2>Recommended Open Quests</h2>
             </div>
-            <a class="sq-link-button" asp-controller="Dashboard" asp-action="Worker">Refresh</a>
+            <a class="sq-link-button" asp-controller="Worker" asp-action="Jobs">Open board</a>
         </div>
 
         @if (Model.SuggestedJobs.Count == 0)
@@ -105,6 +105,7 @@
                                 @job.CreatedAt.ToLocalTime().ToString("MMM d")
                             </span>
                         </div>
+                        <a class="sq-button sq-button--ghost sq-button--block" asp-controller="Worker" asp-action="Job" asp-route-id="@job.Id">View quest</a>
                     </article>
                 }
             </div>
@@ -116,6 +117,7 @@
                     <span class="sq-eyebrow">Applications</span>
                     <h2>Recent Applications</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="Worker" asp-action="Applications">View all</a>
             </div>
             @if (Model.RecentApplications.Count == 0)
             {
@@ -157,6 +159,7 @@
                     <span class="sq-eyebrow">Active Work</span>
                     <h2>Quest Log</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="Worker" asp-action="Assignments">Open</a>
             </div>
             @if (Model.ActiveAssignments.Count == 0)
             {
@@ -185,6 +188,7 @@
                     <span class="sq-eyebrow">Signals</span>
                     <h2>Notifications</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="Notifications" asp-action="Index">All</a>
             </div>
             @if (Model.Notifications.Count == 0)
             {
@@ -214,7 +218,6 @@
                     <h2>Achievements</h2>
                 </div>
             </div>
-            @* Placeholder: richer badge art will be wired after achievement media assets are added. *@
             @if (Model.AchievementNames.Count == 0)
             {
                 <div class="sq-compact-empty">Complete quests to unlock achievements.</div>

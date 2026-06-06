@@ -1,0 +1,96 @@
+@model WalletPageViewModel
+@{
+    var stats = new[]
+    {
+        new StatCardViewModel { Label = "Balance", Value = Model.CurrentBalance.ToString("C"), Detail = "Available for withdrawal", Icon = "account_balance_wallet", Accent = "primary" },
+        new StatCardViewModel { Label = "Earned", Value = Model.TotalEarned.ToString("C"), Detail = "All-time completed work", Icon = "payments", Accent = "secondary" },
+        new StatCardViewModel { Label = "Withdrawn", Value = Model.TotalWithdrawn.ToString("C"), Detail = "Requested withdrawals", Icon = "account_balance", Accent = "tertiary" }
+    };
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Portal",
+    Title = "Wallet",
+    Subtitle = "Review earnings, transaction history, and request withdrawals."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-stat-grid">
+    @foreach (var stat in stats)
+    {
+        <partial name="_StatCard" model="stat" />
+    }
+</section>
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Ledger</span>
+                    <h2>Recent transactions</h2>
+                </div>
+            </div>
+            @if (Model.Transactions.Count == 0)
+            {
+                <div class="sq-compact-empty">Earnings and withdrawals will appear here.</div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var transaction in Model.Transactions)
+                            {
+                                <tr>
+                                    <td>@transaction.Type</td>
+                                    <td>@transaction.Amount.ToString("C")</td>
+                                    <td><span class="sq-status @(transaction.Status == TransactionStatus.Completed ? "is-success" : transaction.Status == TransactionStatus.Failed ? "is-danger" : "")">@transaction.Status</span></td>
+                                    <td>@transaction.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel sq-plan-card">
+            <span class="sq-eyebrow">Withdraw</span>
+            <h2>Request payout</h2>
+            <form asp-action="RequestWithdrawal" method="post">
+                <div class="sq-field">
+                    <label asp-for="Withdrawal.Amount"></label>
+                    <input asp-for="Withdrawal.Amount" name="Amount" type="number" min="1" step="0.01" />
+                    <span asp-validation-for="Withdrawal.Amount" class="sq-field-validation"></span>
+                </div>
+                <button class="sq-button sq-button--primary sq-button--block" type="submit">
+                    <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+                    Request withdrawal
+                </button>
+            </form>
+        </div>
+    </aside>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

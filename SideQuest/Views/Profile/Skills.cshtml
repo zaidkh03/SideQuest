@@ -1,0 +1,53 @@
+@model WorkerSkillsPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Profile",
+    Title = "Skills",
+    Subtitle = "Choose the skills you want employers to see on your profile.",
+    ActionText = "Back to Profile",
+    ActionUrl = Url.Action("Index", "Profile"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<form class="sq-panel" method="post">
+    @if (Model.Skills.Count == 0)
+    {
+        <div class="sq-compact-empty">No skill records are available yet.</div>
+    }
+    else
+    {
+        <div class="sq-skill-grid">
+            @foreach (var skill in Model.Skills)
+            {
+                <label class="sq-skill-row">
+                    <span>
+                        <input type="checkbox" name="SelectedSkillIds" value="@skill.SkillId" checked="@skill.IsSelected" />
+                        @skill.Name
+                    </span>
+                    <select name="SkillLevels[@skill.SkillId]" aria-label="@skill.Name level">
+                        @for (var level = 1; level <= 5; level++)
+                        {
+                            <option value="@level" selected="@(skill.SkillLevel == level)">Level @level</option>
+                        }
+                    </select>
+                </label>
+            }
+        </div>
+        <div class="sq-form-actions">
+            <button class="sq-button sq-button--primary" type="submit">
+                <span class="material-symbols-outlined" aria-hidden="true">save</span>
+                Save skills
+            </button>
+        </div>
+    }
+</form>

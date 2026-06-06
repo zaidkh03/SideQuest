@@ -1,0 +1,56 @@
+@model NotificationsPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Inbox",
+    Title = "Notifications",
+    Subtitle = "Review account, application, assignment, wallet, and review updates."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<div class="sq-tab-row">
+    <a class="sq-button @(Model.UnreadOnly ? "sq-button--ghost" : "sq-button--primary")" asp-action="Index">All</a>
+    <a class="sq-button @(Model.UnreadOnly ? "sq-button--primary" : "sq-button--ghost")" asp-action="Index" asp-route-unreadOnly="true">Unread</a>
+</div>
+
+<section class="sq-panel">
+    @if (Model.Notifications.Count == 0)
+    {
+        <div class="sq-empty-state">
+            <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+            <h3>No notifications</h3>
+            <p>Important SideQuest updates will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sq-feed-list">
+            @foreach (var notification in Model.Notifications)
+            {
+                <article class="sq-feed-item @(notification.IsRead ? "" : "is-unread")">
+                    <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">notifications</span>
+                    <div>
+                        <h3>@notification.Title</h3>
+                        <p>@notification.Message</p>
+                        <span class="sq-status">@notification.Type</span>
+                        <span>@notification.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                    </div>
+                    @if (!notification.IsRead)
+                    {
+                        <form asp-action="MarkRead" asp-route-id="@notification.Id" asp-route-unreadOnly="@Model.UnreadOnly" method="post">
+                            <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Mark read</button>
+                        </form>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>

@@ -26,7 +26,7 @@
 <div class="sq-auth-actions">
     @if (SignInManager.IsSignedIn(User))
     {
-        <a class="sq-user-chip" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage account">
+        <a class="sq-user-chip" asp-area="" asp-controller="Profile" asp-action="Index" title="Open profile">
             <span class="sq-avatar">@initials</span>
             <span class="sq-user-chip__name">@displayName</span>
         </a>

@@ -1,0 +1,214 @@
+@model EmployerJobDetailViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Quest Management",
+    Title = Model.Job.Title,
+    Subtitle = $"{Model.Job.Status} · {Model.Job.CategoryName} · {Model.Job.RewardLabel}",
+    ActionText = "Back to Jobs",
+    ActionUrl = Url.Action("Jobs", "Employer"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Overview</span>
+                    <h2>@Model.Job.Title</h2>
+                </div>
+                <span class="sq-status">@Model.Job.Status</span>
+            </div>
+            <p class="sq-muted-text">@Model.Job.Description</p>
+            <dl class="sq-detail-list">
+                <div><dt>Workers</dt><dd>@Model.Job.AcceptedWorkers/@Model.Job.WorkersNeeded accepted</dd></div>
+                <div><dt>Timeline</dt><dd>@Model.Job.StartDate.ToLocalTime().ToString("MMM d") - @Model.Job.EndDate.ToLocalTime().ToString("MMM d, yyyy")</dd></div>
+                <div><dt>Budget</dt><dd>@Model.Job.RewardLabel</dd></div>
+                <div><dt>Created</dt><dd>@Model.Job.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</dd></div>
+            </dl>
+            <div class="sq-card-actions">
+                <a class="sq-button sq-button--ghost" asp-action="EditJob" asp-route-id="@Model.Job.Id">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    Edit
+                </a>
+                @if (Model.Job.Status == JobStatus.Draft)
+                {
+                    <form asp-action="Publish" asp-route-id="@Model.Job.Id" method="post">
+                        <button class="sq-button sq-button--secondary" type="submit">
+                            <span class="material-symbols-outlined" aria-hidden="true">publish</span>
+                            Publish
+                        </button>
+                    </form>
+                }
+                @if (Model.Job.Status is not JobStatus.Completed and not JobStatus.Cancelled)
+                {
+                    <form asp-action="Cancel" asp-route-id="@Model.Job.Id" method="post">
+                        <button class="sq-button sq-button--ghost" type="submit">
+                            <span class="material-symbols-outlined" aria-hidden="true">block</span>
+                            Cancel
+                        </button>
+                    </form>
+                    <form asp-action="Close" asp-route-id="@Model.Job.Id" method="post">
+                        <button class="sq-button sq-button--ghost" type="submit">
+                            <span class="material-symbols-outlined" aria-hidden="true">done_all</span>
+                            Close
+                        </button>
+                    </form>
+                }
+            </div>
+        </article>
+
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Applicants</span>
+                    <h2>Applications</h2>
+                </div>
+            </div>
+            @if (Model.Applications.Count == 0)
+            {
+                <div class="sq-compact-empty">Applications will appear here after the quest is published.</div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>Worker</th>
+                                <th>Letter</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in Model.Applications)
+                            {
+                                <tr>
+                                    <td><strong>@application.WorkerName</strong><span>@application.AppliedAt.ToLocalTime().ToString("MMM d, yyyy")</span></td>
+                                    <td>@(application.CoverLetter.Length > 130 ? $"{application.CoverLetter[..130]}..." : application.CoverLetter)</td>
+                                    <td><span class="sq-status @(application.Status == ApplicationStatus.Accepted ? "is-success" : application.Status == ApplicationStatus.Rejected ? "is-danger" : "")">@application.Status</span></td>
+                                    <td>
+                                        @if (application.Status == ApplicationStatus.Pending)
+                                        {
+                                            <div class="sq-card-actions">
+                                                <form asp-action="AcceptApplication" asp-route-id="@application.Id" method="post">
+                                                    <button class="sq-button sq-button--secondary sq-button--sm" type="submit">Accept</button>
+                                                </form>
+                                                <form asp-action="RejectApplication" asp-route-id="@application.Id" method="post">
+                                                    <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Reject</button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Assignments</span>
+                    <h2>Workers</h2>
+                </div>
+            </div>
+            @if (Model.Assignments.Count == 0)
+            {
+                <div class="sq-compact-empty">Accepted applicants become assignments here.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var assignment in Model.Assignments)
+                    {
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">person_check</span>
+                            <div>
+                                <h3>@assignment.WorkerName</h3>
+                                <p>@assignment.JobTitle · @assignment.AgreedRate.ToString("C")@(assignment.BudgetType == BudgetType.Hourly ? "/hr" : "")</p>
+                                <span class="sq-status @(assignment.IsCompleted ? "is-success" : "")">@(assignment.IsCompleted ? "Completed" : "Active")</span>
+                                @if (!assignment.IsCompleted)
+                                {
+                                    <form class="sq-inline-complete" asp-action="CompleteAssignment" method="post">
+                                        <input type="hidden" name="AssignmentId" value="@assignment.Id" />
+                                        <input type="hidden" name="JobId" value="@assignment.JobId" />
+                                        @if (assignment.BudgetType == BudgetType.Hourly)
+                                        {
+                                            <input name="HoursWorked" type="number" min="0.25" step="0.25" placeholder="Hours" />
+                                        }
+                                        <button class="sq-button sq-button--secondary sq-button--sm" type="submit">Complete</button>
+                                    </form>
+                                }
+                                else if (Model.Job.Status is JobStatus.WaitingForReview or JobStatus.Completed)
+                                {
+                                    <form class="sq-decision-form" asp-action="ReviewWorker" method="post">
+                                        <input type="hidden" name="JobId" value="@assignment.JobId" />
+                                        <input type="hidden" name="ReviewedUserId" value="@assignment.WorkerId" />
+                                        <div class="sq-field">
+                                            <label>Rating</label>
+                                            <select name="Rating">
+                                                @for (var rating = 5; rating >= 1; rating--)
+                                                {
+                                                    <option value="@rating">@rating</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="sq-field">
+                                            <label>Review</label>
+                                            <textarea name="Comment" rows="3" placeholder="How did the worker do?"></textarea>
+                                        </div>
+                                        <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Review</button>
+                                    </form>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Reviews</span>
+                    <h2>Submitted</h2>
+                </div>
+            </div>
+            @if (Model.Reviews.Count == 0)
+            {
+                <div class="sq-compact-empty">Reviews appear after completed assignments are rated.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">star</span>
+                            <div>
+                                <h3>@review.ReviewedUserName · @review.Rating/5</h3>
+                                <p>@review.Comment</p>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+</section>

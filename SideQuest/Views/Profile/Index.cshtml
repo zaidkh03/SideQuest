@@ -1,0 +1,119 @@
+@model ProfileOverviewViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = Model.RoleLabel,
+    Title = Model.DisplayName,
+    Subtitle = string.IsNullOrWhiteSpace(Model.Headline) ? "SideQuest profile" : Model.Headline
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-profile-layout">
+    <article class="sq-panel sq-profile-hero">
+        @if (!string.IsNullOrWhiteSpace(Model.ProfileImageUrl))
+        {
+            <img class="sq-profile-avatar sq-profile-avatar--image" src="@Model.ProfileImageUrl" alt="@Model.DisplayName" />
+        }
+        else
+        {
+            <span class="sq-profile-avatar">@Model.Initials</span>
+        }
+        <div>
+            <span class="sq-status @(Model.VerificationStatus == VerificationStatus.Approved ? "is-success" : Model.VerificationStatus == VerificationStatus.Rejected ? "is-danger" : "")">
+                @(Model.VerificationStatus?.ToString() ?? Model.RoleLabel)
+            </span>
+            <h2>@Model.DisplayName</h2>
+            <p>@Model.Email</p>
+            @if (!string.IsNullOrWhiteSpace(Model.Location))
+            {
+                <p>
+                    <span class="material-symbols-outlined" aria-hidden="true">location_on</span>
+                    @Model.Location
+                </p>
+            }
+        </div>
+        <div class="sq-profile-actions">
+            <a class="sq-icon-button" asp-action="Edit" aria-label="Edit profile">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            </a>
+            <a class="sq-icon-button" asp-area="Identity" asp-page="/Account/Manage/Index" aria-label="Account settings">
+                <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+            </a>
+        </div>
+    </article>
+
+    @if (Model.Stats.Count > 0)
+    {
+        <section class="sq-stat-grid sq-stat-grid--four">
+            @foreach (var stat in Model.Stats)
+            {
+                <partial name="_StatCard" model="stat" />
+            }
+        </section>
+    }
+
+    <section class="sq-dashboard-grid">
+        <div class="sq-dashboard-main">
+            <article class="sq-panel">
+                <div class="sq-section-heading">
+                    <div>
+                        <span class="sq-eyebrow">About</span>
+                        <h2>Main info</h2>
+                    </div>
+                </div>
+                <p class="sq-muted-text">@Model.Bio</p>
+            </article>
+
+            @if (Model.Skills.Count > 0)
+            {
+                <article class="sq-panel">
+                    <div class="sq-section-heading">
+                        <div>
+                            <span class="sq-eyebrow">Skills</span>
+                            <h2>Worker strengths</h2>
+                        </div>
+                        <a class="sq-link-button" asp-action="Skills">Manage</a>
+                    </div>
+                    <div class="sq-chip-list">
+                        @foreach (var skill in Model.Skills)
+                        {
+                            <span class="sq-chip">@skill.Name · L@skill.SkillLevel</span>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+
+        <aside class="sq-dashboard-side">
+            <div class="sq-panel">
+                <div class="sq-section-heading">
+                    <div>
+                        <span class="sq-eyebrow">Badges</span>
+                        <h2>Achievements</h2>
+                    </div>
+                </div>
+                @if (Model.Achievements.Count == 0)
+                {
+                    <div class="sq-compact-empty">Achievements appear here as the account earns them.</div>
+                }
+                else
+                {
+                    <div class="sq-chip-list">
+                        @foreach (var achievement in Model.Achievements)
+                        {
+                            <span class="sq-chip">@achievement</span>
+                        }
+                    </div>
+                }
+            </div>
+        </aside>
+    </section>
+</section>

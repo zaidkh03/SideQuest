@@ -47,7 +47,9 @@ namespace SideQuest.Controllers
                     Headline = workerProfile.Headline,
                     Location = workerProfile.Location,
                     MaskedNationalId = MaskIdentifier(workerProfile.NationalId),
-                    SubmittedAt = workerProfile.VerificationSubmittedAt
+                    Status = workerProfile.VerificationStatus,
+                    SubmittedAt = workerProfile.VerificationSubmittedAt,
+                    ReviewedAt = workerProfile.VerificationReviewedAt
                 })
                 .ToListAsync();
 
@@ -65,7 +67,9 @@ namespace SideQuest.Controllers
                     CompanyName = companyProfile.CompanyName,
                     RegistrationNumber = MaskIdentifier(companyProfile.RegistrationNumber),
                     Location = companyProfile.Location,
-                    SubmittedAt = companyProfile.VerificationSubmittedAt
+                    Status = companyProfile.VerificationStatus,
+                    SubmittedAt = companyProfile.VerificationSubmittedAt,
+                    ReviewedAt = companyProfile.VerificationReviewedAt
                 })
                 .ToListAsync();
 
@@ -80,6 +84,110 @@ namespace SideQuest.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet("Workers")]
+        public async Task<IActionResult> Workers(string? search, VerificationStatus? status)
+        {
+            SetAdminViewData("Worker Verifications");
+
+            var query = _context.WorkerProfiles
+                .AsNoTracking()
+                .Include(workerProfile => workerProfile.User)
+                .AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(workerProfile => workerProfile.VerificationStatus == status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(workerProfile =>
+                    workerProfile.User.FullName.Contains(term) ||
+                    (workerProfile.User.Email != null && workerProfile.User.Email.Contains(term)) ||
+                    workerProfile.Headline.Contains(term) ||
+                    workerProfile.Location.Contains(term));
+            }
+
+            var workers = await query
+                .OrderBy(workerProfile => workerProfile.VerificationStatus == VerificationStatus.Submitted ? 0 : 1)
+                .ThenByDescending(workerProfile => workerProfile.VerificationSubmittedAt)
+                .Take(200)
+                .Select(workerProfile => new WorkerVerificationQueueItemViewModel
+                {
+                    ProfileId = workerProfile.Id,
+                    UserName = workerProfile.User.FullName,
+                    Email = workerProfile.User.Email ?? string.Empty,
+                    Headline = workerProfile.Headline,
+                    Location = workerProfile.Location,
+                    MaskedNationalId = MaskIdentifier(workerProfile.NationalId),
+                    Status = workerProfile.VerificationStatus,
+                    SubmittedAt = workerProfile.VerificationSubmittedAt,
+                    ReviewedAt = workerProfile.VerificationReviewedAt
+                })
+                .ToListAsync();
+
+            return View(new VerificationListPageViewModel
+            {
+                QueueType = "Workers",
+                Search = search,
+                Status = status,
+                Workers = workers
+            });
+        }
+
+        [HttpGet("Companies")]
+        public async Task<IActionResult> Companies(string? search, VerificationStatus? status)
+        {
+            SetAdminViewData("Company Verifications");
+
+            var query = _context.CompanyProfiles
+                .AsNoTracking()
+                .Include(companyProfile => companyProfile.User)
+                .AsQueryable();
+
+            if (status.HasValue)
+            {
+                query = query.Where(companyProfile => companyProfile.VerificationStatus == status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(companyProfile =>
+                    companyProfile.User.FullName.Contains(term) ||
+                    (companyProfile.User.Email != null && companyProfile.User.Email.Contains(term)) ||
+                    companyProfile.CompanyName.Contains(term) ||
+                    companyProfile.Location.Contains(term));
+            }
+
+            var companies = await query
+                .OrderBy(companyProfile => companyProfile.VerificationStatus == VerificationStatus.Submitted ? 0 : 1)
+                .ThenByDescending(companyProfile => companyProfile.VerificationSubmittedAt)
+                .Take(200)
+                .Select(companyProfile => new CompanyVerificationQueueItemViewModel
+                {
+                    ProfileId = companyProfile.Id,
+                    UserName = companyProfile.User.FullName,
+                    Email = companyProfile.User.Email ?? string.Empty,
+                    CompanyName = companyProfile.CompanyName,
+                    RegistrationNumber = MaskIdentifier(companyProfile.RegistrationNumber),
+                    Location = companyProfile.Location,
+                    Status = companyProfile.VerificationStatus,
+                    SubmittedAt = companyProfile.VerificationSubmittedAt,
+                    ReviewedAt = companyProfile.VerificationReviewedAt
+                })
+                .ToListAsync();
+
+            return View(new VerificationListPageViewModel
+            {
+                QueueType = "Companies",
+                Search = search,
+                Status = status,
+                Companies = companies
+            });
         }
 
         [HttpGet("Worker/{id:int}")]

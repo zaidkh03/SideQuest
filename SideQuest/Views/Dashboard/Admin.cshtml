@@ -59,6 +59,7 @@
                     <span class="sq-eyebrow">Users</span>
                     <h2>Recent Accounts</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="AdminManagement" asp-action="Users">View all</a>
             </div>
             @if (Model.RecentUsers.Count == 0)
             {
@@ -113,6 +114,7 @@
                     <span class="sq-eyebrow">Jobs</span>
                     <h2>Latest Quest Activity</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="AdminManagement" asp-action="Jobs">Monitor</a>
             </div>
             @if (Model.RecentJobs.Count == 0)
             {
@@ -145,13 +147,13 @@
                     <h2>Admin Queues</h2>
                 </div>
             </div>
-            @* Placeholder: complaint/report moderation models are not implemented yet, so this panel avoids fake report counts. *@
             <div class="sq-feed-list">
                 <article class="sq-feed-item">
                     <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">category</span>
                     <div>
                         <h3>Categories</h3>
                         <p>@Model.CategoryCount active records are available for job organization.</p>
+                        <a class="sq-link-button" asp-controller="AdminManagement" asp-action="Categories">Manage</a>
                     </div>
                 </article>
                 <article class="sq-feed-item">
@@ -159,6 +161,7 @@
                     <div>
                         <h3>Achievements</h3>
                         <p>@Model.AchievementCount reward records are ready for gamification.</p>
+                        <a class="sq-link-button" asp-controller="AdminManagement" asp-action="Achievements">Manage</a>
                     </div>
                 </article>
             </div>

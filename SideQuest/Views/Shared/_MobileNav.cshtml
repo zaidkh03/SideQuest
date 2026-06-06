@@ -20,12 +20,36 @@
             <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
             <span>Worker</span>
         </a>
+        <a class="sq-mobile-nav__link" asp-controller="Worker" asp-action="Jobs">
+            <span class="material-symbols-outlined" aria-hidden="true">work</span>
+            <span>Jobs</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="Worker" asp-action="Applications">
+            <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
+            <span>Apps</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="Worker" asp-action="Wallet">
+            <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+            <span>Wallet</span>
+        </a>
     }
     @if (User.IsInRole(SideQuestRoles.Employer))
     {
         <a class="@LinkClass("Employer")" asp-controller="Dashboard" asp-action="Employer">
             <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
             <span>Company</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="CreateJob">
+            <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
+            <span>Post</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="Jobs">
+            <span class="material-symbols-outlined" aria-hidden="true">work</span>
+            <span>Jobs</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="Company">
+            <span class="material-symbols-outlined" aria-hidden="true">business</span>
+            <span>Profile</span>
         </a>
     }
     @if (User.IsInRole(SideQuestRoles.Admin))
@@ -38,6 +62,14 @@
             <span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
             <span>Review</span>
         </a>
+        <a class="sq-mobile-nav__link" asp-controller="AdminManagement" asp-action="Users">
+            <span class="material-symbols-outlined" aria-hidden="true">group</span>
+            <span>Users</span>
+        </a>
+        <a class="sq-mobile-nav__link" asp-controller="AdminManagement" asp-action="Jobs">
+            <span class="material-symbols-outlined" aria-hidden="true">work</span>
+            <span>Jobs</span>
+        </a>
     }
     @if (!hasPortalRole)
     {
@@ -46,12 +78,12 @@
             <span>Status</span>
         </a>
     }
-    <a class="sq-mobile-nav__link" asp-controller="Dashboard" asp-action="Index">
-        <span class="material-symbols-outlined" aria-hidden="true">explore</span>
-        <span>Portal</span>
+    <a class="sq-mobile-nav__link" asp-controller="Notifications" asp-action="Index">
+        <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+        <span>Alerts</span>
     </a>
-    <a class="sq-mobile-nav__link" asp-area="Identity" asp-page="/Account/Manage/Index">
+    <a class="sq-mobile-nav__link" asp-controller="Profile" asp-action="Index">
         <span class="material-symbols-outlined" aria-hidden="true">person</span>
-        <span>Account</span>
+        <span>Me</span>
     </a>
 </nav>

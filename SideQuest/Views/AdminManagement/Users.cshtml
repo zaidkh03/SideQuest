@@ -1,0 +1,65 @@
+@model AdminUsersPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Admin Portal",
+    Title = "Users",
+    Subtitle = "Review user roles and enable or disable accounts."
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-panel">
+    <div class="sq-table-wrap">
+        <table class="sq-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <strong>@user.FullName</strong>
+                            <span>@user.Email</span>
+                        </td>
+                        <td>
+                            @if (user.Roles.Count == 0)
+                            {
+                                <span class="sq-status">Pending</span>
+                            }
+                            else
+                            {
+                                <div class="sq-chip-list sq-chip-list--compact">
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        <span class="sq-chip">@role</span>
+                                    }
+                                </div>
+                            }
+                        </td>
+                        <td><span class="sq-status @(user.IsActive ? "is-success" : "is-danger")">@(user.IsActive ? "Active" : "Disabled")</span></td>
+                        <td>
+                            <form asp-action="UpdateUserStatus" asp-route-userId="@user.Id" method="post">
+                                <input type="hidden" name="isActive" value="@(!user.IsActive)" />
+                                <button class="sq-button sq-button--ghost sq-button--sm" type="submit">@(user.IsActive ? "Disable" : "Enable")</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

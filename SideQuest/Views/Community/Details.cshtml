@@ -1,0 +1,73 @@
+@model CommunityPostDetailViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = Model.Post.Type.ToString(),
+    Title = Model.Post.Title,
+    Subtitle = $"{Model.Post.AuthorName} · {Model.Post.CreatedAt.ToLocalTime():MMM d, yyyy}",
+    ActionText = "Back to Community",
+    ActionUrl = Url.Action("Index", "Community"),
+    ActionIcon = "arrow_back"
+})" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
+
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <p class="sq-muted-text">@Model.Content</p>
+        </article>
+
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Thread</span>
+                    <h2>Comments</h2>
+                </div>
+            </div>
+            @if (Model.Comments.Count == 0)
+            {
+                <div class="sq-compact-empty">No comments yet.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">chat</span>
+                            <div>
+                                <h3>@comment.AuthorName</h3>
+                                <p>@comment.Content</p>
+                                <span>@comment.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <form class="sq-panel sq-plan-card" asp-action="Comment" asp-route-id="@Model.Post.Id" method="post">
+            <span class="sq-eyebrow">Reply</span>
+            <h2>Add comment</h2>
+            <div class="sq-field">
+                <label asp-for="CommentForm.Content"></label>
+                <textarea asp-for="CommentForm.Content" name="Content" rows="5"></textarea>
+            </div>
+            <button class="sq-button sq-button--primary sq-button--block" type="submit">Post comment</button>
+        </form>
+    </aside>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

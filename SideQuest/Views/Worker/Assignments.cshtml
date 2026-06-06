@@ -1,0 +1,50 @@
+@model WorkerAssignmentsPageViewModel
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Worker Portal",
+    Title = "Quest log",
+    Subtitle = "See active assignments, completed work, and earnings recorded by employers."
+})" />
+
+<section class="sq-panel">
+    @if (Model.Assignments.Count == 0)
+    {
+        <div class="sq-empty-state">
+            <span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+            <h3>No assignments yet</h3>
+            <p>Accepted applications become assignments and will appear in this quest log.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sq-table-wrap">
+            <table class="sq-table">
+                <thead>
+                    <tr>
+                        <th>Quest</th>
+                        <th>Company</th>
+                        <th>Rate</th>
+                        <th>Earnings</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var assignment in Model.Assignments)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@assignment.JobTitle</strong>
+                                <span>@(assignment.CompletedAt?.ToLocalTime().ToString("MMM d, yyyy") ?? "In progress")</span>
+                            </td>
+                            <td>@assignment.CompanyName</td>
+                            <td>@assignment.AgreedRate.ToString("C")@(assignment.BudgetType == BudgetType.Hourly ? "/hr" : "")</td>
+                            <td>@assignment.Earnings.ToString("C")</td>
+                            <td><span class="sq-status @(assignment.IsCompleted ? "is-success" : "")">@(assignment.IsCompleted ? "Completed" : "Active")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

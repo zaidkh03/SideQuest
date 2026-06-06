@@ -49,11 +49,10 @@
 @if (Model.NeedsCompanyProfile)
 {
     <section class="sq-panel sq-onboarding-panel">
-        @* Placeholder: MVC company profile editing is planned for the next UI milestone; the API already exists. *@
         <span class="material-symbols-outlined" aria-hidden="true">business</span>
         <h2>Company profile required</h2>
         <p>Your company dashboard will fill with jobs, applicants, and assignments once a profile exists.</p>
-        <button class="sq-button sq-button--ghost" type="button" disabled>Company profile page coming next</button>
+        <a class="sq-button sq-button--primary" asp-controller="Employer" asp-action="Company">Open company profile</a>
     </section>
 }
 else
@@ -72,6 +71,7 @@ else
                     <span class="sq-eyebrow">Quest Pipeline</span>
                     <h2>Your Recent Quests</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="Employer" asp-action="Jobs">View all</a>
             </div>
 
             @if (Model.RecentJobs.Count == 0)
@@ -99,18 +99,20 @@ else
                                     <span style="width: @(job.WorkersNeeded == 0 ? 0 : Math.Min(100, job.AcceptedWorkers * 100 / job.WorkersNeeded))%"></span>
                                 </div>
                             </div>
+                            <a class="sq-button sq-button--ghost sq-button--block" asp-controller="Employer" asp-action="Details" asp-route-id="@job.Id">Manage</a>
                         </article>
                     }
                 </div>
             }
 
             <div class="sq-panel">
-                <div class="sq-section-heading">
-                    <div>
-                        <span class="sq-eyebrow">Applications</span>
-                        <h2>Latest Applicants</h2>
-                    </div>
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Applications</span>
+                    <h2>Latest Applicants</h2>
                 </div>
+                <a class="sq-link-button" asp-controller="Employer" asp-action="Jobs">Manage</a>
+            </div>
                 @if (Model.RecentApplications.Count == 0)
                 {
                     <div class="sq-compact-empty">Applications for your jobs will show up here.</div>

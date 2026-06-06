@@ -1,0 +1,83 @@
+@model JobFormViewModel
+@{
+    var isEdit = Model.Id.HasValue;
+    var actionName = isEdit ? "EditJob" : "CreateJob";
+}
+
+<partial name="_PageHeader" model="@(new PageHeaderViewModel
+{
+    Eyebrow = "Employer Portal",
+    Title = isEdit ? "Edit quest" : "Post quest",
+    Subtitle = "Save the job as a draft first. Publish from the quest detail page when it is ready.",
+    ActionText = "Back to Jobs",
+    ActionUrl = Url.Action("Jobs", "Employer"),
+    ActionIcon = "arrow_back"
+})" />
+
+<form class="sq-panel sq-verification-form" asp-action="@actionName" asp-route-id="@Model.Id" method="post">
+    <div asp-validation-summary="ModelOnly" class="sq-validation-summary"></div>
+    <input asp-for="Id" type="hidden" />
+    <div class="sq-form-grid">
+        <div class="sq-field sq-field--wide">
+            <label asp-for="Title"></label>
+            <input asp-for="Title" />
+            <span asp-validation-for="Title" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="CategoryId"></label>
+            <select asp-for="CategoryId">
+                <option value="">Choose category</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+            <span asp-validation-for="CategoryId" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="BudgetType"></label>
+            <select asp-for="BudgetType" asp-items="Html.GetEnumSelectList<BudgetType>()"></select>
+            <span asp-validation-for="BudgetType" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="FixedBudget"></label>
+            <input asp-for="FixedBudget" type="number" min="0" step="0.01" />
+            <span asp-validation-for="FixedBudget" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="HourlyRate"></label>
+            <input asp-for="HourlyRate" type="number" min="0" step="0.01" />
+            <span asp-validation-for="HourlyRate" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="WorkersNeeded"></label>
+            <input asp-for="WorkersNeeded" type="number" min="1" />
+            <span asp-validation-for="WorkersNeeded" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="StartDate"></label>
+            <input asp-for="StartDate" type="datetime-local" />
+            <span asp-validation-for="StartDate" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field">
+            <label asp-for="EndDate"></label>
+            <input asp-for="EndDate" type="datetime-local" />
+            <span asp-validation-for="EndDate" class="sq-field-validation"></span>
+        </div>
+        <div class="sq-field sq-field--wide">
+            <label asp-for="Description"></label>
+            <textarea asp-for="Description" rows="8"></textarea>
+            <span asp-validation-for="Description" class="sq-field-validation"></span>
+        </div>
+    </div>
+    <div class="sq-form-actions">
+        <button class="sq-button sq-button--primary" type="submit">
+            <span class="material-symbols-outlined" aria-hidden="true">save</span>
+            @(isEdit ? "Save quest" : "Create draft")
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
