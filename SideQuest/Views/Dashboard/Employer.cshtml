@@ -30,7 +30,7 @@
         {
             Label = "Commission Ledger",
             Value = Model.CommissionTotal.ToString("C"),
-            Detail = Model.SubscriptionName,
+            Detail = "Approved job percentages",
             Icon = "payments",
             Accent = "primary"
         }
@@ -173,12 +173,6 @@ else
                         }
                     </div>
                 }
-            </div>
-
-            <div class="sq-panel sq-plan-card">
-                <span class="sq-eyebrow">Subscription</span>
-                <h2>@Model.SubscriptionName</h2>
-                <p>Subscription limits are enforced by the backend when quests are published.</p>
             </div>
         </aside>
     </section>

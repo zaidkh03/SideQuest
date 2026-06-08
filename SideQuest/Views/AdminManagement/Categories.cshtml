@@ -16,58 +16,127 @@
     <div class="sq-alert sq-alert--danger">@errorMessage</div>
 }
 
-<section class="sq-dashboard-grid">
-    <div class="sq-dashboard-main">
-        <div class="sq-panel">
-            <div class="sq-table-wrap">
-                <table class="sq-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var category in Model.Categories)
-                        {
-                            <tr>
-                                <td><strong>@category.Name</strong></td>
-                                <td>@category.Description</td>
-                                <td><span class="sq-status @(category.IsActive ? "is-success" : "is-danger")">@(category.IsActive ? "Active" : "Inactive")</span></td>
-                                <td><a class="sq-button sq-button--ghost sq-button--sm" asp-action="Categories" asp-route-editId="@category.Id">Edit</a></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+<section class="sq-panel">
+    <div class="sq-section-heading">
+        <div>
+            <span class="sq-eyebrow">Reference Data</span>
+            <h2>Category table</h2>
+        </div>
+        <button class="sq-button sq-button--primary" type="button" data-bs-toggle="modal" data-bs-target="#categoryCreateModal">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Create category
+        </button>
+    </div>
+
+    <div class="sq-table-wrap">
+        <table class="sq-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model.Categories)
+                {
+                    <tr>
+                        <td><strong>@category.Name</strong></td>
+                        <td>@category.Description</td>
+                        <td><span class="sq-status @(category.IsActive ? "is-success" : "is-danger")">@(category.IsActive ? "Active" : "Inactive")</span></td>
+                        <td>
+                            <button class="sq-button sq-button--ghost sq-button--sm" type="button" data-bs-toggle="modal" data-bs-target="#categoryEditModal-@category.Id">Edit</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade sq-modal" id="categoryCreateModal" tabindex="-1" aria-labelledby="categoryCreateTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="SaveCategory" method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="sq-eyebrow">Create</span>
+                        <h2 class="modal-title" id="categoryCreateTitle">Category</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body sq-verification-form">
+                    <input asp-for="Form.Id" type="hidden" />
+                    <div class="sq-field">
+                        <label asp-for="Form.Name"></label>
+                        <input asp-for="Form.Name" />
+                        <span asp-validation-for="Form.Name" class="sq-field-validation"></span>
+                    </div>
+                    <div class="sq-field">
+                        <label asp-for="Form.Description"></label>
+                        <textarea asp-for="Form.Description" rows="4"></textarea>
+                        <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
+                    </div>
+                    <label class="sq-checkline">
+                        <input asp-for="Form.IsActive" />
+                        <span>Active</span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="sq-button sq-button--primary" type="submit">Save category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach (var category in Model.Categories)
+{
+    <div class="modal fade sq-modal" id="categoryEditModal-@category.Id" tabindex="-1" aria-labelledby="categoryEditTitle-@category.Id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="SaveCategory" method="post">
+                    <div class="modal-header">
+                        <div>
+                            <span class="sq-eyebrow">Edit</span>
+                            <h2 class="modal-title" id="categoryEditTitle-@category.Id">Category</h2>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body sq-verification-form">
+                        <input type="hidden" name="Form.Id" value="@category.Id" />
+                        <div class="sq-field">
+                            <label for="CategoryName-@category.Id">Name</label>
+                            <input id="CategoryName-@category.Id" name="Form.Name" value="@category.Name" />
+                        </div>
+                        <div class="sq-field">
+                            <label for="CategoryDescription-@category.Id">Description</label>
+                            <textarea id="CategoryDescription-@category.Id" name="Form.Description" rows="4">@category.Description</textarea>
+                        </div>
+                        <label class="sq-checkline">
+                            <input type="checkbox" name="Form.IsActive" value="true" checked="@category.IsActive" />
+                            <input type="hidden" name="Form.IsActive" value="false" />
+                            <span>Active</span>
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="sq-button sq-button--primary" type="submit">Save category</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <aside class="sq-dashboard-side">
-        <form class="sq-panel sq-plan-card" asp-action="SaveCategory" method="post">
-            <input asp-for="Form.Id" type="hidden" name="Id" />
-            <span class="sq-eyebrow">@(Model.Form.Id.HasValue ? "Edit" : "Create")</span>
-            <h2>Category</h2>
-            <div class="sq-field">
-                <label asp-for="Form.Name"></label>
-                <input asp-for="Form.Name" name="Name" />
-                <span asp-validation-for="Form.Name" class="sq-field-validation"></span>
-            </div>
-            <div class="sq-field">
-                <label asp-for="Form.Description"></label>
-                <textarea asp-for="Form.Description" name="Description" rows="4"></textarea>
-                <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
-            </div>
-            <label class="sq-checkline">
-                <input asp-for="Form.IsActive" name="IsActive" />
-                <span>Active</span>
-            </label>
-            <button class="sq-button sq-button--primary sq-button--block" type="submit">Save category</button>
-        </form>
-    </aside>
-</section>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @if (ViewData["OpenCategoryModal"] is true)
+    {
+        <script>
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('@(Model.Form.Id.HasValue ? $"categoryEditModal-{Model.Form.Id.Value}" : "categoryCreateModal")')).show();
+        </script>
+    }
 }

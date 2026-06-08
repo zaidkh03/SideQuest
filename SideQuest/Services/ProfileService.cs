@@ -119,6 +119,11 @@ namespace SideQuest.Services
             profile.VerificationRejectionMessage = null;
             profile.UpdatedAt = DateTime.UtcNow;
 
+            var user = await _context.Users.FirstAsync(applicationUser => applicationUser.Id == userId);
+            user.FullName = request.LegalName.Trim();
+            user.PhoneNumber = request.PhoneNumber.Trim();
+            user.DateOfBirth = request.VerificationDateOfBirth;
+
             await _context.SaveChangesAsync();
 
             var savedProfile = await GetWorkerProfileQuery()
@@ -201,7 +206,6 @@ namespace SideQuest.Services
             }
 
             var profile = await _context.CompanyProfiles
-                .Include(companyProfile => companyProfile.CompanySubscriptions)
                 .FirstOrDefaultAsync(companyProfile => companyProfile.UserId == userId);
 
             if (profile is null)
@@ -285,9 +289,7 @@ namespace SideQuest.Services
 
         private IQueryable<CompanyProfile> GetCompanyProfileQuery()
         {
-            return _context.CompanyProfiles
-                .Include(companyProfile => companyProfile.CompanySubscriptions)
-                    .ThenInclude(subscription => subscription.Plan);
+            return _context.CompanyProfiles;
         }
     }
 }

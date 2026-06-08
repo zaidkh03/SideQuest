@@ -52,5 +52,7 @@ namespace SideQuest.Models
         public virtual ICollection<CommunityPost> CommunityPosts { get; set; } = new HashSet<CommunityPost>();
 
         public virtual ICollection<CommunityComment> CommunityComments { get; set; } = new HashSet<CommunityComment>();
+
+        public virtual ICollection<CommunityPostLike> CommunityPostLikes { get; set; } = new HashSet<CommunityPostLike>();
     }
 }

@@ -22,16 +22,6 @@
             }
         </select>
     </div>
-    <div class="sq-field">
-        <label for="budgetType">Budget</label>
-        <select id="budgetType" name="budgetType">
-            <option value="">Any budget</option>
-            @foreach (var budgetType in Enum.GetValues<BudgetType>())
-            {
-                <option value="@budgetType" selected="@(Model.BudgetType == budgetType)">@budgetType</option>
-            }
-        </select>
-    </div>
     <div class="sq-form-actions sq-form-actions--inline">
         <button class="sq-button sq-button--primary" type="submit">
             <span class="material-symbols-outlined" aria-hidden="true">search</span>

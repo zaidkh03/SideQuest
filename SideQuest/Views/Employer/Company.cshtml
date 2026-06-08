@@ -61,11 +61,6 @@
             <h2>@Model.VerificationStatus</h2>
             <p>@(Model.IsVerified ? "This company is verified and can post quests." : "Verification status controls employer access.")</p>
         </div>
-        <div class="sq-panel sq-plan-card">
-            <span class="sq-eyebrow">Subscription</span>
-            <h2>@(Model.ActiveSubscription?.PlanName ?? "No active plan")</h2>
-            <p>@(Model.ActiveSubscription is null ? "Approved companies receive a starter subscription." : $"{Model.ActiveSubscription.JobLimitPerMonth} jobs per month · {Model.ActiveSubscription.CommissionRate:0.##}% commission")</p>
-        </div>
     </aside>
 </section>
 

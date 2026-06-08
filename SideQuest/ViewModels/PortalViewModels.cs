@@ -31,11 +31,25 @@ namespace SideQuest.ViewModels
 
         public decimal HourlyRate { get; set; }
 
+        public decimal HoursPerDay { get; set; }
+
+        public int DurationDays { get; set; }
+
         public int WorkersNeeded { get; set; }
 
         public int AcceptedWorkers { get; set; }
 
         public JobStatus Status { get; set; }
+
+        public decimal OfferedCommissionRate { get; set; }
+
+        public decimal? RequiredCommissionRate { get; set; }
+
+        public decimal? ApprovedCommissionRate { get; set; }
+
+        public string? CommissionReviewNote { get; set; }
+
+        public DateTime? CommissionReviewedAt { get; set; }
 
         public DateTime StartDate { get; set; }
 
@@ -104,6 +118,13 @@ namespace SideQuest.ViewModels
         public IReadOnlyList<PortalApplicationViewModel> Applications { get; set; } = [];
     }
 
+    public sealed class WorkerWorkPageViewModel
+    {
+        public IReadOnlyList<PortalApplicationViewModel> Applications { get; set; } = [];
+
+        public IReadOnlyList<PortalAssignmentViewModel> Assignments { get; set; } = [];
+    }
+
     public sealed class PortalAssignmentViewModel
     {
         public int Id { get; set; }
@@ -161,8 +182,6 @@ namespace SideQuest.ViewModels
 
         public VerificationStatus VerificationStatus { get; set; }
 
-        public SubscriptionSummaryResponse? ActiveSubscription { get; set; }
-
         public CompanyProfileFormViewModel Form { get; set; } = new();
     }
 
@@ -190,6 +209,10 @@ namespace SideQuest.ViewModels
 
     public sealed class EmployerJobsPageViewModel
     {
+        public JobFormViewModel Form { get; set; } = new();
+
+        public IReadOnlyList<CategoryOptionViewModel> Categories { get; set; } = [];
+
         public IReadOnlyList<PortalJobViewModel> Jobs { get; set; } = [];
     }
 
@@ -209,7 +232,7 @@ namespace SideQuest.ViewModels
         public int CategoryId { get; set; }
 
         [Display(Name = "Budget type")]
-        public BudgetType BudgetType { get; set; } = BudgetType.Fixed;
+        public BudgetType BudgetType { get; set; } = BudgetType.Hourly;
 
         [Range(0, 1000000)]
         [Display(Name = "Fixed budget")]
@@ -218,6 +241,14 @@ namespace SideQuest.ViewModels
         [Range(0, 1000000)]
         [Display(Name = "Hourly rate")]
         public decimal HourlyRate { get; set; }
+
+        [Range(0.25, 24)]
+        [Display(Name = "Hours per day")]
+        public decimal HoursPerDay { get; set; } = 8;
+
+        [Range(1, 365)]
+        [Display(Name = "Number of days")]
+        public int DurationDays { get; set; } = 1;
 
         [Range(1, 1000)]
         [Display(Name = "Workers needed")]
@@ -230,6 +261,10 @@ namespace SideQuest.ViewModels
         [DataType(DataType.DateTime)]
         [Display(Name = "End date")]
         public DateTime EndDate { get; set; } = DateTime.UtcNow.AddDays(2);
+
+        [Range(10, 100)]
+        [Display(Name = "Platform commission %")]
+        public decimal OfferedCommissionRate { get; set; } = 10;
 
         public IReadOnlyList<CategoryOptionViewModel> Categories { get; set; } = [];
     }
@@ -276,6 +311,8 @@ namespace SideQuest.ViewModels
         public string DisplayName { get; set; } = string.Empty;
 
         public string Email { get; set; } = string.Empty;
+
+        public string? PhoneNumber { get; set; }
 
         public string Initials { get; set; } = string.Empty;
 
@@ -441,6 +478,17 @@ namespace SideQuest.ViewModels
         public IReadOnlyList<PortalJobViewModel> Jobs { get; set; } = [];
     }
 
+    public sealed class AdminJobCommissionFormViewModel
+    {
+        [Range(10, 100)]
+        [Display(Name = "Required commission %")]
+        public decimal RequiredCommissionRate { get; set; } = 15;
+
+        [Required]
+        [MaxLength(1000)]
+        public string Note { get; set; } = string.Empty;
+    }
+
     public sealed class AdminFinancePageViewModel
     {
         public decimal PlatformCommissionTotal { get; set; }
@@ -499,9 +547,15 @@ namespace SideQuest.ViewModels
 
         public string AuthorName { get; set; } = string.Empty;
 
+        public string AuthorInitials { get; set; } = string.Empty;
+
         public CommunityPostType Type { get; set; }
 
         public int CommentCount { get; set; }
+
+        public int LikeCount { get; set; }
+
+        public bool IsLikedByCurrentUser { get; set; }
 
         public DateTime CreatedAt { get; set; }
     }
@@ -538,6 +592,8 @@ namespace SideQuest.ViewModels
     public sealed class CommunityCommentViewModel
     {
         public string AuthorName { get; set; } = string.Empty;
+
+        public string AuthorInitials { get; set; } = string.Empty;
 
         public string Content { get; set; } = string.Empty;
 

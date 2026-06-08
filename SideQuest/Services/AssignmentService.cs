@@ -54,8 +54,6 @@ namespace SideQuest.Services
             var assignment = await GetAssignmentQuery()
                 .Include(existingAssignment => existingAssignment.Job.Assignments)
                 .Include(existingAssignment => existingAssignment.Job.Commission)
-                .Include(existingAssignment => existingAssignment.Job.Company.CompanySubscriptions)
-                    .ThenInclude(subscription => subscription.Plan)
                 .FirstOrDefaultAsync(existingAssignment => existingAssignment.Id == assignmentId);
 
             if (assignment is null)
@@ -157,11 +155,8 @@ namespace SideQuest.Services
 
         private void ApplyCommissionLedger(JobAssignment assignment, string employerUserId, decimal earnings)
         {
-            var commissionRate = assignment.Job.Company.CompanySubscriptions
-                .Where(subscription => subscription.IsActive)
-                .OrderByDescending(subscription => subscription.StartDate)
-                .Select(subscription => subscription.Plan.CommissionRate)
-                .FirstOrDefault();
+            var commissionRate = assignment.Job.ApprovedCommissionRate
+                ?? assignment.Job.OfferedCommissionRate;
 
             if (commissionRate <= 0)
             {

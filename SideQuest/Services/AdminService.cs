@@ -259,7 +259,6 @@ namespace SideQuest.Services
         {
             var profile = await _context.CompanyProfiles
                 .Include(companyProfile => companyProfile.User)
-                .Include(companyProfile => companyProfile.CompanySubscriptions)
                 .FirstOrDefaultAsync(companyProfile => companyProfile.Id == profileId);
 
             if (profile is null)
@@ -276,7 +275,6 @@ namespace SideQuest.Services
             profile.VerifiedAt = DateTime.UtcNow;
             profile.User.IsActive = true;
 
-            await EnsureFreeSubscriptionAsync(profile);
             await EnsureRoleAsync(profile.User, SideQuestRoles.Employer);
             await _context.SaveChangesAsync();
 
@@ -340,28 +338,5 @@ namespace SideQuest.Services
             }
         }
 
-        private async Task EnsureFreeSubscriptionAsync(CompanyProfile profile)
-        {
-            if (profile.CompanySubscriptions.Any(subscription => subscription.IsActive))
-            {
-                return;
-            }
-
-            var freePlan = await _context.SubscriptionPlans
-                .FirstOrDefaultAsync(plan => plan.Name == "Free");
-
-            if (freePlan is null)
-            {
-                return;
-            }
-
-            profile.CompanySubscriptions.Add(new CompanySubscription
-            {
-                Plan = freePlan,
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddMonths(1),
-                IsActive = true
-            });
-        }
     }
 }

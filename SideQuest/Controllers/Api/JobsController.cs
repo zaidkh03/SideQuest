@@ -73,6 +73,24 @@ namespace SideQuest.Controllers.Api
                 : ToActionResult(await _jobService.PublishJobAsync(CurrentUserId, jobId));
         }
 
+        [HttpPost("{jobId:int}/approve")]
+        [Authorize(Roles = SideQuestRoles.Admin)]
+        public async Task<ActionResult<JobResponse>> Approve(int jobId)
+        {
+            return CurrentUserId is null
+                ? UnauthorizedResult<JobResponse>()
+                : ToActionResult(await _jobService.ApproveJobCommissionAsync(CurrentUserId, jobId));
+        }
+
+        [HttpPost("{jobId:int}/request-commission")]
+        [Authorize(Roles = SideQuestRoles.Admin)]
+        public async Task<ActionResult<JobResponse>> RequestCommissionUpdate(int jobId, JobCommissionUpdateRequest request)
+        {
+            return CurrentUserId is null
+                ? UnauthorizedResult<JobResponse>()
+                : ToActionResult(await _jobService.RequestCommissionUpdateAsync(CurrentUserId, jobId, request));
+        }
+
         [HttpPost("{jobId:int}/cancel")]
         [Authorize(Roles = SideQuestRoles.Employer)]
         public async Task<ActionResult<JobResponse>> Cancel(int jobId)

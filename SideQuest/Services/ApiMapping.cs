@@ -41,11 +41,6 @@ namespace SideQuest.Services
 
         public static CompanyProfileResponse ToResponse(this CompanyProfile profile)
         {
-            var activeSubscription = profile.CompanySubscriptions
-                .Where(subscription => subscription.IsActive)
-                .OrderByDescending(subscription => subscription.StartDate)
-                .FirstOrDefault();
-
             return new CompanyProfileResponse
             {
                 Id = profile.Id,
@@ -60,17 +55,7 @@ namespace SideQuest.Services
                 VerificationSubmittedAt = profile.VerificationSubmittedAt,
                 VerificationReviewedAt = profile.VerificationReviewedAt,
                 VerificationRejectionReason = profile.VerificationRejectionReason,
-                VerificationRejectionMessage = profile.VerificationRejectionMessage,
-                ActiveSubscription = activeSubscription is null
-                    ? null
-                    : new SubscriptionSummaryResponse
-                    {
-                        PlanName = activeSubscription.Plan.Name,
-                        JobLimitPerMonth = activeSubscription.Plan.JobLimitPerMonth,
-                        CommissionRate = activeSubscription.Plan.CommissionRate,
-                        StartDate = activeSubscription.StartDate,
-                        EndDate = activeSubscription.EndDate
-                    }
+                VerificationRejectionMessage = profile.VerificationRejectionMessage
             };
         }
 
@@ -88,11 +73,19 @@ namespace SideQuest.Services
                 BudgetType = job.BudgetType,
                 FixedBudget = job.FixedBudget,
                 HourlyRate = job.HourlyRate,
+                HoursPerDay = job.HoursPerDay,
+                DurationDays = job.DurationDays,
                 WorkersNeeded = job.WorkersNeeded,
                 AcceptedWorkers = job.Assignments.Count,
                 StartDate = job.StartDate,
                 EndDate = job.EndDate,
                 Status = job.Status,
+                OfferedCommissionRate = job.OfferedCommissionRate,
+                RequiredCommissionRate = job.RequiredCommissionRate,
+                ApprovedCommissionRate = job.ApprovedCommissionRate,
+                CommissionReviewNote = job.CommissionReviewNote,
+                CommissionReviewedAt = job.CommissionReviewedAt,
+                CommissionReviewedByAdminId = job.CommissionReviewedByAdminId,
                 CreatedAt = job.CreatedAt
             };
         }

@@ -174,8 +174,6 @@ namespace SideQuest.Controllers
 
             var company = await _context.CompanyProfiles
                 .AsNoTracking()
-                .Include(companyProfile => companyProfile.CompanySubscriptions)
-                    .ThenInclude(subscription => subscription.Plan)
                 .FirstOrDefaultAsync(companyProfile => companyProfile.UserId == userId);
 
             if (company is null)
@@ -238,16 +236,10 @@ namespace SideQuest.Controllers
                 .Where(commission => commission.CompanyId == company.Id)
                 .SumAsync(commission => (decimal?)commission.Amount) ?? 0;
 
-            var activeSubscription = company.CompanySubscriptions
-                .Where(subscription => subscription.IsActive)
-                .OrderByDescending(subscription => subscription.StartDate)
-                .FirstOrDefault();
-
             var model = new EmployerDashboardViewModel
             {
                 DisplayName = user?.FullName ?? user?.Email ?? "Company",
                 CompanyName = company.CompanyName,
-                SubscriptionName = activeSubscription?.Plan.Name ?? "No active plan",
                 ActiveJobsCount = activeJobsCount,
                 DraftJobsCount = draftJobsCount,
                 TotalApplicationsCount = totalApplicationsCount,
@@ -334,6 +326,9 @@ namespace SideQuest.Controllers
                 CompanyName = job.Company.CompanyName,
                 CategoryName = job.Category.Name,
                 RewardLabel = FormatReward(job),
+                OfferedCommissionRate = job.OfferedCommissionRate,
+                RequiredCommissionRate = job.RequiredCommissionRate,
+                ApprovedCommissionRate = job.ApprovedCommissionRate,
                 WorkersNeeded = job.WorkersNeeded,
                 AcceptedWorkers = job.Assignments.Count,
                 Status = job.Status,

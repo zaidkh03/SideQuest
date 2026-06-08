@@ -53,6 +53,8 @@ namespace SideQuest.Data
 
         public DbSet<CommunityComment> CommunityComments { get; set; }
 
+        public DbSet<CommunityPostLike> CommunityPostLikes { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -217,6 +219,24 @@ namespace SideQuest.Data
 
                 entity.Property(job => job.HourlyRate)
                     .HasPrecision(18, 2);
+
+                entity.Property(job => job.HoursPerDay)
+                    .HasPrecision(10, 2);
+
+                entity.Property(job => job.OfferedCommissionRate)
+                    .HasPrecision(5, 2);
+
+                entity.Property(job => job.RequiredCommissionRate)
+                    .HasPrecision(5, 2);
+
+                entity.Property(job => job.ApprovedCommissionRate)
+                    .HasPrecision(5, 2);
+
+                entity.Property(job => job.CommissionReviewNote)
+                    .HasMaxLength(1000);
+
+                entity.Property(job => job.CommissionReviewedByAdminId)
+                    .HasMaxLength(450);
 
                 entity.HasOne(job => job.Company)
                     .WithMany(company => company.Jobs)
@@ -536,6 +556,26 @@ namespace SideQuest.Data
                 entity.HasOne(comment => comment.User)
                     .WithMany(user => user.CommunityComments)
                     .HasForeignKey(comment => comment.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<CommunityPostLike>(entity =>
+            {
+                entity.HasIndex(like => new
+                    {
+                        like.PostId,
+                        like.UserId
+                    })
+                    .IsUnique();
+
+                entity.HasOne(like => like.Post)
+                    .WithMany(post => post.Likes)
+                    .HasForeignKey(like => like.PostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(like => like.User)
+                    .WithMany(user => user.CommunityPostLikes)
+                    .HasForeignKey(like => like.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }

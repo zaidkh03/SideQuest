@@ -46,6 +46,7 @@ namespace SideQuest.Controllers
             {
                 DisplayName = displayName,
                 Email = user.Email ?? string.Empty,
+                PhoneNumber = user.PhoneNumber,
                 Initials = PortalPageMapping.Initials(displayName),
                 ProfileImageUrl = user.ProfileImageUrl,
                 RoleLabel = roles.FirstOrDefault() ?? "Pending",
@@ -241,8 +242,6 @@ namespace SideQuest.Controllers
             return await _context.Users
                 .Include(user => user.WorkerProfile)
                 .Include(user => user.CompanyProfile)
-                    .ThenInclude(company => company!.CompanySubscriptions)
-                    .ThenInclude(subscription => subscription.Plan)
                 .Include(user => user.Wallet)
                 .Include(user => user.UserXP)
                 .Include(user => user.UserSkills)
@@ -269,24 +268,18 @@ namespace SideQuest.Controllers
             {
                 var activeJobs = await _context.Jobs.CountAsync(job => job.CompanyId == user.CompanyProfile.Id && job.Status != JobStatus.Completed && job.Status != JobStatus.Cancelled);
                 var applications = await _context.JobApplications.CountAsync(application => application.Job.CompanyId == user.CompanyProfile.Id);
-                var subscription = user.CompanyProfile.CompanySubscriptions.FirstOrDefault(subscription => subscription.IsActive)?.Plan.Name ?? "No active plan";
 
                 return
                 [
                     new StatCardViewModel { Label = "Active Jobs", Value = activeJobs.ToString(), Detail = "Current pipeline", Icon = "work", Accent = "primary" },
                     new StatCardViewModel { Label = "Applications", Value = applications.ToString(), Detail = "Across company jobs", Icon = "group", Accent = "secondary" },
-                    new StatCardViewModel { Label = "Subscription", Value = subscription, Detail = user.CompanyProfile.IsVerified ? "Verified company" : "Verification pending", Icon = "business_center", Accent = "tertiary" }
+                    new StatCardViewModel { Label = "Verification", Value = user.CompanyProfile.VerificationStatus.ToString(), Detail = user.CompanyProfile.IsVerified ? "Verified company" : "Verification pending", Icon = "business_center", Accent = "tertiary" }
                 ];
             }
 
             if (roles.Contains(SideQuestRoles.Admin))
             {
-                return
-                [
-                    new StatCardViewModel { Label = "Users", Value = (await _context.Users.CountAsync()).ToString(), Detail = "Platform accounts", Icon = "group", Accent = "primary" },
-                    new StatCardViewModel { Label = "Jobs", Value = (await _context.Jobs.CountAsync()).ToString(), Detail = "All quest records", Icon = "work", Accent = "secondary" },
-                    new StatCardViewModel { Label = "Categories", Value = (await _context.Categories.CountAsync()).ToString(), Detail = "Reference records", Icon = "category", Accent = "tertiary" }
-                ];
+                return [];
             }
 
             return [];

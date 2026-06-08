@@ -33,23 +33,33 @@
             <dl class="sq-detail-list">
                 <div><dt>Workers</dt><dd>@Model.Job.AcceptedWorkers/@Model.Job.WorkersNeeded accepted</dd></div>
                 <div><dt>Timeline</dt><dd>@Model.Job.StartDate.ToLocalTime().ToString("MMM d") - @Model.Job.EndDate.ToLocalTime().ToString("MMM d, yyyy")</dd></div>
-                <div><dt>Budget</dt><dd>@Model.Job.RewardLabel</dd></div>
+                <div><dt>Hourly plan</dt><dd>@Model.Job.RewardLabel · @Model.Job.HoursPerDay.ToString("0.##") hr/day · @Model.Job.DurationDays day(s)</dd></div>
+                <div><dt>Commission</dt><dd>@Model.Job.OfferedCommissionRate.ToString("0.##")% offered@(Model.Job.ApprovedCommissionRate.HasValue ? $" · {Model.Job.ApprovedCommissionRate.Value:0.##}% approved" : "")</dd></div>
                 <div><dt>Created</dt><dd>@Model.Job.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</dd></div>
             </dl>
+            @if (Model.Job.Status == JobStatus.NeedsCommissionUpdate)
+            {
+                <div class="sq-alert sq-alert--danger">
+                    <strong>Commission update needed</strong>
+                    <p>Admin requested at least @Model.Job.RequiredCommissionRate?.ToString("0.##")% for this job. Update the quest and raise the platform commission to open it automatically.</p>
+                    @if (!string.IsNullOrWhiteSpace(Model.Job.CommissionReviewNote))
+                    {
+                        <p>@Model.Job.CommissionReviewNote</p>
+                    }
+                </div>
+            }
+            else if (Model.Job.Status == JobStatus.PendingApproval)
+            {
+                <div class="sq-alert">
+                    <strong>Waiting for admin review</strong>
+                    <p>This job will open to workers after the commission offer is approved.</p>
+                </div>
+            }
             <div class="sq-card-actions">
                 <a class="sq-button sq-button--ghost" asp-action="EditJob" asp-route-id="@Model.Job.Id">
                     <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                     Edit
                 </a>
-                @if (Model.Job.Status == JobStatus.Draft)
-                {
-                    <form asp-action="Publish" asp-route-id="@Model.Job.Id" method="post">
-                        <button class="sq-button sq-button--secondary" type="submit">
-                            <span class="material-symbols-outlined" aria-hidden="true">publish</span>
-                            Publish
-                        </button>
-                    </form>
-                }
                 @if (Model.Job.Status is not JobStatus.Completed and not JobStatus.Cancelled)
                 {
                     <form asp-action="Cancel" asp-route-id="@Model.Job.Id" method="post">

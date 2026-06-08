@@ -44,6 +44,12 @@ namespace SideQuest.ViewModels
 
         public string RewardLabel { get; set; } = string.Empty;
 
+        public decimal OfferedCommissionRate { get; set; }
+
+        public decimal? RequiredCommissionRate { get; set; }
+
+        public decimal? ApprovedCommissionRate { get; set; }
+
         public int WorkersNeeded { get; set; }
 
         public int AcceptedWorkers { get; set; }
@@ -140,8 +146,6 @@ namespace SideQuest.ViewModels
         public bool NeedsCompanyProfile { get; set; }
 
         public string CompanyName { get; set; } = "Company HQ";
-
-        public string SubscriptionName { get; set; } = "No active plan";
 
         public int ActiveJobsCount { get; set; }
 

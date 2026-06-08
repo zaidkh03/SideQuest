@@ -32,6 +32,13 @@
             </span>
             <h2>@Model.DisplayName</h2>
             <p>@Model.Email</p>
+            @if (!string.IsNullOrWhiteSpace(Model.PhoneNumber))
+            {
+                <p>
+                    <span class="material-symbols-outlined" aria-hidden="true">call</span>
+                    @Model.PhoneNumber
+                </p>
+            }
             @if (!string.IsNullOrWhiteSpace(Model.Location))
             {
                 <p>
@@ -41,11 +48,9 @@
             }
         </div>
         <div class="sq-profile-actions">
-            <a class="sq-icon-button" asp-action="Edit" aria-label="Edit profile">
+            <a class="sq-button sq-button--primary" asp-action="Edit">
                 <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-            </a>
-            <a class="sq-icon-button" asp-area="Identity" asp-page="/Account/Manage/Index" aria-label="Account settings">
-                <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+                Edit profile
             </a>
         </div>
     </article>
@@ -60,7 +65,7 @@
         </section>
     }
 
-    <section class="sq-dashboard-grid">
+    <section class="@(Model.Achievements.Count > 0 ? "sq-dashboard-grid" : "sq-profile-layout")">
         <div class="sq-dashboard-main">
             <article class="sq-panel">
                 <div class="sq-section-heading">
@@ -92,28 +97,24 @@
             }
         </div>
 
-        <aside class="sq-dashboard-side">
-            <div class="sq-panel">
-                <div class="sq-section-heading">
-                    <div>
-                        <span class="sq-eyebrow">Badges</span>
-                        <h2>Achievements</h2>
+        @if (Model.Achievements.Count > 0)
+        {
+            <aside class="sq-dashboard-side">
+                <div class="sq-panel">
+                    <div class="sq-section-heading">
+                        <div>
+                            <span class="sq-eyebrow">Badges</span>
+                            <h2>Achievements</h2>
+                        </div>
                     </div>
-                </div>
-                @if (Model.Achievements.Count == 0)
-                {
-                    <div class="sq-compact-empty">Achievements appear here as the account earns them.</div>
-                }
-                else
-                {
                     <div class="sq-chip-list">
                         @foreach (var achievement in Model.Achievements)
                         {
                             <span class="sq-chip">@achievement</span>
                         }
                     </div>
-                }
-            </div>
-        </aside>
+                </div>
+            </aside>
+        }
     </section>
 </section>

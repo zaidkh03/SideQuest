@@ -19,53 +19,70 @@
     <div class="sq-alert sq-alert--danger">@errorMessage</div>
 }
 
-<section class="sq-dashboard-grid">
-    <div class="sq-dashboard-main">
-        <article class="sq-panel">
-            <p class="sq-muted-text">@Model.Content</p>
-        </article>
-
-        <article class="sq-panel">
-            <div class="sq-section-heading">
-                <div>
-                    <span class="sq-eyebrow">Thread</span>
-                    <h2>Comments</h2>
-                </div>
+<section class="sq-social-feed">
+    <article class="sq-panel sq-social-post">
+        <div class="sq-social-post__author">
+            <span class="sq-avatar">@Model.Post.AuthorInitials</span>
+            <div>
+                <h2>@Model.Post.AuthorName</h2>
+                <p>@Model.Post.Type · @Model.Post.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</p>
             </div>
-            @if (Model.Comments.Count == 0)
-            {
-                <div class="sq-compact-empty">No comments yet.</div>
-            }
-            else
-            {
-                <div class="sq-feed-list">
-                    @foreach (var comment in Model.Comments)
-                    {
-                        <article class="sq-feed-item">
-                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">chat</span>
-                            <div>
-                                <h3>@comment.AuthorName</h3>
-                                <p>@comment.Content</p>
-                                <span>@comment.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
-                            </div>
-                        </article>
-                    }
-                </div>
-            }
-        </article>
-    </div>
+        </div>
+        <h3 class="sq-social-post__title">@Model.Post.Title</h3>
+        <p class="sq-muted-text">@Model.Content</p>
+        <div class="sq-social-actions">
+            <form asp-action="ToggleLike" asp-route-id="@Model.Post.Id" method="post">
+                <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                <button class="sq-button sq-button--ghost sq-button--sm" type="submit">
+                    <span class="material-symbols-outlined" aria-hidden="true">thumb_up</span>
+                    @(Model.Post.IsLikedByCurrentUser ? "Liked" : "Like") · @Model.Post.LikeCount
+                </button>
+            </form>
+            <span class="sq-status">@Model.Post.CommentCount comments</span>
+        </div>
+    </article>
 
-    <aside class="sq-dashboard-side">
-        <form class="sq-panel sq-plan-card" asp-action="Comment" asp-route-id="@Model.Post.Id" method="post">
-            <span class="sq-eyebrow">Reply</span>
-            <h2>Add comment</h2>
+    <article class="sq-panel">
+        <div class="sq-section-heading">
+            <div>
+                <span class="sq-eyebrow">Thread</span>
+                <h2>Comments</h2>
+            </div>
+        </div>
+        @if (Model.Comments.Count == 0)
+        {
+            <div class="sq-compact-empty">No comments yet.</div>
+        }
+        else
+        {
+            <div class="sq-comment-list">
+                @foreach (var comment in Model.Comments)
+                {
+                    <article class="sq-comment">
+                        <span class="sq-avatar">@comment.AuthorInitials</span>
+                        <div>
+                            <h3>@comment.AuthorName</h3>
+                            <p>@comment.Content</p>
+                            <p>@comment.CreatedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <form class="sq-comment-form" asp-action="Comment" asp-route-id="@Model.Post.Id" method="post">
             <div class="sq-field">
                 <label asp-for="CommentForm.Content"></label>
-                <textarea asp-for="CommentForm.Content" name="Content" rows="5"></textarea>
+                <textarea asp-for="CommentForm.Content" name="Content" rows="4"></textarea>
             </div>
-            <button class="sq-button sq-button--primary sq-button--block" type="submit">Post comment</button>
+            <div class="sq-form-actions">
+                <button class="sq-button sq-button--primary" type="submit">
+                    <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                    Post comment
+                </button>
+            </div>
         </form>
-    </aside>
+    </article>
 </section>
 
 @section Scripts {

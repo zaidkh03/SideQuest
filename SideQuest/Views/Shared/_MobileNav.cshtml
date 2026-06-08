@@ -26,7 +26,7 @@
         </a>
         <a class="sq-mobile-nav__link" asp-controller="Worker" asp-action="Applications">
             <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
-            <span>Apps</span>
+            <span>Work</span>
         </a>
         <a class="sq-mobile-nav__link" asp-controller="Worker" asp-action="Wallet">
             <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
@@ -39,17 +39,9 @@
             <span class="material-symbols-outlined" aria-hidden="true">business_center</span>
             <span>Company</span>
         </a>
-        <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="CreateJob">
-            <span class="material-symbols-outlined" aria-hidden="true">add_circle</span>
-            <span>Post</span>
-        </a>
         <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="Jobs">
             <span class="material-symbols-outlined" aria-hidden="true">work</span>
             <span>Jobs</span>
-        </a>
-        <a class="sq-mobile-nav__link" asp-controller="Employer" asp-action="Company">
-            <span class="material-symbols-outlined" aria-hidden="true">business</span>
-            <span>Profile</span>
         </a>
     }
     @if (User.IsInRole(SideQuestRoles.Admin))
@@ -78,12 +70,4 @@
             <span>Status</span>
         </a>
     }
-    <a class="sq-mobile-nav__link" asp-controller="Notifications" asp-action="Index">
-        <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
-        <span>Alerts</span>
-    </a>
-    <a class="sq-mobile-nav__link" asp-controller="Profile" asp-action="Index">
-        <span class="material-symbols-outlined" aria-hidden="true">person</span>
-        <span>Me</span>
-    </a>
 </nav>

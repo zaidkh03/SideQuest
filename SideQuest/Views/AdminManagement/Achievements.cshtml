@@ -16,67 +16,139 @@
     <div class="sq-alert sq-alert--danger">@errorMessage</div>
 }
 
-<section class="sq-dashboard-grid">
-    <div class="sq-dashboard-main">
-        <div class="sq-panel">
-            <div class="sq-table-wrap">
-                <table class="sq-table">
-                    <thead>
-                        <tr>
-                            <th>Achievement</th>
-                            <th>XP</th>
-                            <th>Badge</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var achievement in Model.Achievements)
-                        {
-                            <tr>
-                                <td>
-                                    <strong>@achievement.Name</strong>
-                                    <span>@achievement.Description</span>
-                                </td>
-                                <td>@achievement.XPRequired</td>
-                                <td>@achievement.BadgeImageUrl</td>
-                                <td><a class="sq-button sq-button--ghost sq-button--sm" asp-action="Achievements" asp-route-editId="@achievement.Id">Edit</a></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+<section class="sq-panel">
+    <div class="sq-section-heading">
+        <div>
+            <span class="sq-eyebrow">Gamification</span>
+            <h2>Achievement table</h2>
+        </div>
+        <button class="sq-button sq-button--primary" type="button" data-bs-toggle="modal" data-bs-target="#achievementCreateModal">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Create achievement
+        </button>
+    </div>
+
+    <div class="sq-table-wrap">
+        <table class="sq-table">
+            <thead>
+                <tr>
+                    <th>Achievement</th>
+                    <th>XP</th>
+                    <th>Badge</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var achievement in Model.Achievements)
+                {
+                    <tr>
+                        <td>
+                            <strong>@achievement.Name</strong>
+                            <span>@achievement.Description</span>
+                        </td>
+                        <td>@achievement.XPRequired</td>
+                        <td>@achievement.BadgeImageUrl</td>
+                        <td>
+                            <button class="sq-button sq-button--ghost sq-button--sm" type="button" data-bs-toggle="modal" data-bs-target="#achievementEditModal-@achievement.Id">Edit</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade sq-modal" id="achievementCreateModal" tabindex="-1" aria-labelledby="achievementCreateTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form asp-action="SaveAchievement" method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="sq-eyebrow">Create</span>
+                        <h2 class="modal-title" id="achievementCreateTitle">Achievement</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body sq-verification-form">
+                    <input asp-for="Form.Id" type="hidden" />
+                    <div class="sq-field">
+                        <label asp-for="Form.Name"></label>
+                        <input asp-for="Form.Name" />
+                        <span asp-validation-for="Form.Name" class="sq-field-validation"></span>
+                    </div>
+                    <div class="sq-field">
+                        <label asp-for="Form.XPRequired"></label>
+                        <input asp-for="Form.XPRequired" type="number" min="0" />
+                        <span asp-validation-for="Form.XPRequired" class="sq-field-validation"></span>
+                    </div>
+                    <div class="sq-field">
+                        <label asp-for="Form.BadgeImageUrl"></label>
+                        <input asp-for="Form.BadgeImageUrl" />
+                        <span asp-validation-for="Form.BadgeImageUrl" class="sq-field-validation"></span>
+                    </div>
+                    <div class="sq-field">
+                        <label asp-for="Form.Description"></label>
+                        <textarea asp-for="Form.Description" rows="4"></textarea>
+                        <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="sq-button sq-button--primary" type="submit">Save achievement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@foreach (var achievement in Model.Achievements)
+{
+    <div class="modal fade sq-modal" id="achievementEditModal-@achievement.Id" tabindex="-1" aria-labelledby="achievementEditTitle-@achievement.Id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="SaveAchievement" method="post">
+                    <div class="modal-header">
+                        <div>
+                            <span class="sq-eyebrow">Edit</span>
+                            <h2 class="modal-title" id="achievementEditTitle-@achievement.Id">Achievement</h2>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body sq-verification-form">
+                        <input type="hidden" name="Form.Id" value="@achievement.Id" />
+                        <div class="sq-field">
+                            <label for="AchievementName-@achievement.Id">Name</label>
+                            <input id="AchievementName-@achievement.Id" name="Form.Name" value="@achievement.Name" />
+                        </div>
+                        <div class="sq-field">
+                            <label for="AchievementXP-@achievement.Id">XP required</label>
+                            <input id="AchievementXP-@achievement.Id" name="Form.XPRequired" value="@achievement.XPRequired" type="number" min="0" />
+                        </div>
+                        <div class="sq-field">
+                            <label for="AchievementBadge-@achievement.Id">Badge image URL</label>
+                            <input id="AchievementBadge-@achievement.Id" name="Form.BadgeImageUrl" value="@achievement.BadgeImageUrl" />
+                        </div>
+                        <div class="sq-field">
+                            <label for="AchievementDescription-@achievement.Id">Description</label>
+                            <textarea id="AchievementDescription-@achievement.Id" name="Form.Description" rows="4">@achievement.Description</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="sq-button sq-button--primary" type="submit">Save achievement</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-    <aside class="sq-dashboard-side">
-        <form class="sq-panel sq-plan-card" asp-action="SaveAchievement" method="post">
-            <input asp-for="Form.Id" type="hidden" name="Id" />
-            <span class="sq-eyebrow">@(Model.Form.Id.HasValue ? "Edit" : "Create")</span>
-            <h2>Achievement</h2>
-            <div class="sq-field">
-                <label asp-for="Form.Name"></label>
-                <input asp-for="Form.Name" name="Name" />
-                <span asp-validation-for="Form.Name" class="sq-field-validation"></span>
-            </div>
-            <div class="sq-field">
-                <label asp-for="Form.XPRequired"></label>
-                <input asp-for="Form.XPRequired" name="XPRequired" type="number" min="0" />
-                <span asp-validation-for="Form.XPRequired" class="sq-field-validation"></span>
-            </div>
-            <div class="sq-field">
-                <label asp-for="Form.BadgeImageUrl"></label>
-                <input asp-for="Form.BadgeImageUrl" name="BadgeImageUrl" />
-                <span asp-validation-for="Form.BadgeImageUrl" class="sq-field-validation"></span>
-            </div>
-            <div class="sq-field">
-                <label asp-for="Form.Description"></label>
-                <textarea asp-for="Form.Description" name="Description" rows="4"></textarea>
-                <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
-            </div>
-            <button class="sq-button sq-button--primary sq-button--block" type="submit">Save achievement</button>
-        </form>
-    </aside>
-</section>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    @if (ViewData["OpenAchievementModal"] is true)
+    {
+        <script>
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('@(Model.Form.Id.HasValue ? $"achievementEditModal-{Model.Form.Id.Value}" : "achievementCreateModal")')).show();
+        </script>
+    }
 }

@@ -17,19 +17,21 @@ namespace SideQuest.Models
 
     public enum BudgetType
     {
-        Fixed,
-        Hourly
+        Fixed = 0,
+        Hourly = 1
     }
 
     public enum JobStatus
     {
-        Draft,
-        Open,
-        InProgress,
-        WaitingForReview,
-        Completed,
-        Overdue,
-        Cancelled
+        Draft = 0,
+        Open = 1,
+        InProgress = 2,
+        WaitingForReview = 3,
+        Completed = 4,
+        Overdue = 5,
+        Cancelled = 6,
+        PendingApproval = 7,
+        NeedsCommissionUpdate = 8
     }
 
     public enum ApplicationStatus

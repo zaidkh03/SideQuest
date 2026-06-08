@@ -4,7 +4,7 @@
 {
     Eyebrow = Model.RoleLabel,
     Title = "Edit profile",
-    Subtitle = "Update public profile details here. Use the settings icon for account security and Identity settings.",
+    Subtitle = "Update your account, contact, photo, and public profile details.",
     ActionText = "Back to Profile",
     ActionUrl = Url.Action("Index", "Profile"),
     ActionIcon = "arrow_back"
@@ -19,9 +19,6 @@
             <span class="sq-eyebrow">Account</span>
             <h2>Main info</h2>
         </div>
-        <a class="sq-icon-button" asp-area="Identity" asp-page="/Account/Manage/Index" aria-label="Account settings">
-            <span class="material-symbols-outlined" aria-hidden="true">settings</span>
-        </a>
     </div>
 
     <div class="sq-form-grid">

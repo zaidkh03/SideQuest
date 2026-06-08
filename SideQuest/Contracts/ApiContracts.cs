@@ -233,21 +233,6 @@ namespace SideQuest.Contracts
         public string? VerificationRejectionReason { get; set; }
 
         public string? VerificationRejectionMessage { get; set; }
-
-        public SubscriptionSummaryResponse? ActiveSubscription { get; set; }
-    }
-
-    public sealed class SubscriptionSummaryResponse
-    {
-        public string PlanName { get; set; } = string.Empty;
-
-        public int JobLimitPerMonth { get; set; }
-
-        public decimal CommissionRate { get; set; }
-
-        public DateTime StartDate { get; set; }
-
-        public DateTime EndDate { get; set; }
     }
 
     public sealed class JobQueryParameters
@@ -277,7 +262,7 @@ namespace SideQuest.Contracts
         [Range(1, int.MaxValue)]
         public int CategoryId { get; set; }
 
-        public BudgetType BudgetType { get; set; }
+        public BudgetType BudgetType { get; set; } = BudgetType.Hourly;
 
         [Range(0, 1000000)]
         public decimal FixedBudget { get; set; }
@@ -285,12 +270,31 @@ namespace SideQuest.Contracts
         [Range(0, 1000000)]
         public decimal HourlyRate { get; set; }
 
+        [Range(0.25, 24)]
+        public decimal HoursPerDay { get; set; }
+
+        [Range(1, 365)]
+        public int DurationDays { get; set; } = 1;
+
         [Range(1, 1000)]
         public int WorkersNeeded { get; set; } = 1;
 
         public DateTime StartDate { get; set; }
 
         public DateTime EndDate { get; set; }
+
+        [Range(10, 100)]
+        public decimal OfferedCommissionRate { get; set; } = 10m;
+    }
+
+    public sealed class JobCommissionUpdateRequest
+    {
+        [Range(10, 100)]
+        public decimal RequiredCommissionRate { get; set; }
+
+        [Required]
+        [MaxLength(1000)]
+        public string Note { get; set; } = string.Empty;
     }
 
     public sealed class JobResponse
@@ -315,6 +319,10 @@ namespace SideQuest.Contracts
 
         public decimal HourlyRate { get; set; }
 
+        public decimal HoursPerDay { get; set; }
+
+        public int DurationDays { get; set; }
+
         public int WorkersNeeded { get; set; }
 
         public int AcceptedWorkers { get; set; }
@@ -324,6 +332,18 @@ namespace SideQuest.Contracts
         public DateTime EndDate { get; set; }
 
         public JobStatus Status { get; set; }
+
+        public decimal OfferedCommissionRate { get; set; }
+
+        public decimal? RequiredCommissionRate { get; set; }
+
+        public decimal? ApprovedCommissionRate { get; set; }
+
+        public string? CommissionReviewNote { get; set; }
+
+        public DateTime? CommissionReviewedAt { get; set; }
+
+        public string? CommissionReviewedByAdminId { get; set; }
 
         public DateTime CreatedAt { get; set; }
     }

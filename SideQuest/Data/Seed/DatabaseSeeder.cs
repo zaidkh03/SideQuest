@@ -32,7 +32,6 @@ namespace SideQuest.Data.Seed
             await SeedRoles();
             await SeedDevelopmentAdmin();
             await SeedCategories();
-            await SeedSubscriptionPlans();
             await SeedAchievements();
             await SeedSkills();
             await _context.SaveChangesAsync();
@@ -160,46 +159,6 @@ namespace SideQuest.Data.Seed
 
             await _context.Categories.AddRangeAsync(
                 categories.Where(category => !existingNames.Contains(category.Name)));
-        }
-
-        private async Task SeedSubscriptionPlans()
-        {
-            var existingPlanNames = await _context.SubscriptionPlans
-                .Select(plan => plan.Name)
-                .ToListAsync();
-
-            var existingNames = existingPlanNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            var plans = new[]
-            {
-                new SubscriptionPlan
-                {
-                    Name = "Free",
-                    Price = 0.00m,
-                    JobLimitPerMonth = 3,
-                    CommissionRate = 12.00m,
-                    Description = "Starter plan for small teams testing SideQuest with up to 3 jobs per month."
-                },
-                new SubscriptionPlan
-                {
-                    Name = "Pro",
-                    Price = 29.99m,
-                    JobLimitPerMonth = 25,
-                    CommissionRate = 8.00m,
-                    Description = "Mid-tier plan for growing companies with a higher monthly job limit."
-                },
-                new SubscriptionPlan
-                {
-                    Name = "Business",
-                    Price = 99.99m,
-                    JobLimitPerMonth = int.MaxValue,
-                    CommissionRate = 5.00m,
-                    Description = "Premium plan for high-volume companies with unlimited monthly jobs."
-                }
-            };
-
-            await _context.SubscriptionPlans.AddRangeAsync(
-                plans.Where(plan => !existingNames.Contains(plan.Name)));
         }
 
         private async Task SeedAchievements()

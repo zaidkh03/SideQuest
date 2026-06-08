@@ -26,5 +26,7 @@ namespace SideQuest.Models
         public virtual ApplicationUser User { get; set; } = null!;
 
         public virtual ICollection<CommunityComment> Comments { get; set; } = new HashSet<CommunityComment>();
+
+        public virtual ICollection<CommunityPostLike> Likes { get; set; } = new HashSet<CommunityPostLike>();
     }
 }

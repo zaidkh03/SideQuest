@@ -28,6 +28,11 @@ namespace SideQuest.Models
         [Precision(18, 2)]
         public decimal HourlyRate { get; set; }
 
+        [Precision(10, 2)]
+        public decimal HoursPerDay { get; set; }
+
+        public int DurationDays { get; set; }
+
         public int WorkersNeeded { get; set; }
 
         public DateTime StartDate { get; set; }
@@ -35,6 +40,23 @@ namespace SideQuest.Models
         public DateTime EndDate { get; set; }
 
         public JobStatus Status { get; set; }
+
+        [Precision(5, 2)]
+        public decimal OfferedCommissionRate { get; set; }
+
+        [Precision(5, 2)]
+        public decimal? RequiredCommissionRate { get; set; }
+
+        [Precision(5, 2)]
+        public decimal? ApprovedCommissionRate { get; set; }
+
+        [MaxLength(1000)]
+        public string? CommissionReviewNote { get; set; }
+
+        public DateTime? CommissionReviewedAt { get; set; }
+
+        [MaxLength(450)]
+        public string? CommissionReviewedByAdminId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

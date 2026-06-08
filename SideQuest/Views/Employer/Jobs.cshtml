@@ -4,10 +4,7 @@
 {
     Eyebrow = "Employer Portal",
     Title = "Company jobs",
-    Subtitle = "Manage drafts, published quests, applicants, assignments, and closeout.",
-    ActionText = "Post Quest",
-    ActionUrl = Url.Action("CreateJob", "Employer"),
-    ActionIcon = "add"
+    Subtitle = "Manage submitted, approved, and active quests from one place."
 })" />
 
 @if (TempData["SuccessMessage"] is string successMessage)
@@ -19,37 +16,181 @@
     <div class="sq-alert sq-alert--danger">@errorMessage</div>
 }
 
-@if (Model.Jobs.Count == 0)
-{
-    <div class="sq-empty-state">
-        <span class="material-symbols-outlined" aria-hidden="true">post_add</span>
-        <h3>No jobs yet</h3>
-        <p>Create a draft quest, then publish it when it is ready for workers.</p>
-        <a class="sq-button sq-button--primary" asp-action="CreateJob">Post first quest</a>
+<section class="sq-panel">
+    <div class="sq-section-heading">
+        <div>
+            <span class="sq-eyebrow">Quest Pipeline</span>
+            <h2>Jobs</h2>
+        </div>
+        <button class="sq-button sq-button--primary" type="button" data-bs-toggle="modal" data-bs-target="#jobCreateModal">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Post Quest
+        </button>
     </div>
-}
-else
-{
-    <section class="sq-quest-list sq-quest-list--cards">
-        @foreach (var job in Model.Jobs)
-        {
-            <article class="sq-quest-card">
-                <div class="sq-quest-card__top">
-                    <span class="sq-badge">@job.CategoryName</span>
-                    <strong>@job.Status</strong>
+
+    @if (Model.Jobs.Count == 0)
+    {
+        <div class="sq-empty-state">
+            <span class="material-symbols-outlined" aria-hidden="true">post_add</span>
+            <h3>No jobs yet</h3>
+            <p>Create an hourly quest and send it to admin review.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sq-table-wrap">
+            <table class="sq-table">
+                <thead>
+                    <tr>
+                        <th>Quest</th>
+                        <th>Schedule</th>
+                        <th>Pay</th>
+                        <th>Commission</th>
+                        <th>Status</th>
+                        <th>Workers</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var job in Model.Jobs)
+                    {
+                        var statusClass = job.Status == JobStatus.Open || job.Status == JobStatus.Completed
+                            ? "is-success"
+                            : job.Status == JobStatus.Cancelled || job.Status == JobStatus.NeedsCommissionUpdate
+                                ? "is-danger"
+                                : string.Empty;
+                        <tr>
+                            <td>
+                                <strong>@job.Title</strong>
+                                <span>@job.CategoryName</span>
+                            </td>
+                            <td>
+                                @job.StartDate.ToLocalTime().ToString("MMM d") - @job.EndDate.ToLocalTime().ToString("MMM d, yyyy")
+                                <span>@job.DurationDays day(s) · @job.HoursPerDay.ToString("0.##") hr/day</span>
+                            </td>
+                            <td>@job.RewardLabel</td>
+                            <td>
+                                <strong>@job.OfferedCommissionRate.ToString("0.##")%</strong>
+                                @if (job.RequiredCommissionRate.HasValue)
+                                {
+                                    <span>Required @job.RequiredCommissionRate.Value.ToString("0.##")%</span>
+                                }
+                                else if (job.ApprovedCommissionRate.HasValue)
+                                {
+                                    <span>Approved @job.ApprovedCommissionRate.Value.ToString("0.##")%</span>
+                                }
+                            </td>
+                            <td><span class="sq-status @statusClass">@job.Status</span></td>
+                            <td>@job.AcceptedWorkers/@job.WorkersNeeded</td>
+                            <td>
+                                <div class="sq-card-actions">
+                                    <a class="sq-button sq-button--ghost sq-button--sm" asp-action="Details" asp-route-id="@job.Id">Manage</a>
+                                    @if (job.Status is JobStatus.PendingApproval or JobStatus.NeedsCommissionUpdate or JobStatus.Open)
+                                    {
+                                        <a class="sq-button sq-button--ghost sq-button--sm" asp-action="EditJob" asp-route-id="@job.Id">Edit</a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<div class="modal fade sq-modal" id="jobCreateModal" tabindex="-1" aria-labelledby="jobCreateTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form asp-action="CreateJob" method="post">
+                <div class="modal-header">
+                    <div>
+                        <span class="sq-eyebrow">Hourly Quest</span>
+                        <h2 class="modal-title" id="jobCreateTitle">Post Quest</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <h3>@job.Title</h3>
-                <p>@job.RewardLabel · @job.AcceptedWorkers/@job.WorkersNeeded accepted</p>
-                <div class="sq-progress sq-progress--compact">
-                    <div class="sq-progress__track">
-                        <span style="width: @(job.WorkersNeeded == 0 ? 0 : Math.Min(100, job.AcceptedWorkers * 100 / job.WorkersNeeded))%"></span>
+                <div class="modal-body sq-verification-form">
+                    <div asp-validation-summary="ModelOnly" class="sq-validation-summary"></div>
+                    <input type="hidden" name="Form.BudgetType" value="@BudgetType.Hourly" />
+                    <input type="hidden" name="Form.FixedBudget" value="0" />
+                    <div class="sq-form-grid">
+                        <div class="sq-field sq-field--wide">
+                            <label asp-for="Form.Title"></label>
+                            <input asp-for="Form.Title" />
+                            <span asp-validation-for="Form.Title" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.CategoryId"></label>
+                            <select asp-for="Form.CategoryId">
+                                <option value="">Choose category</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Form.CategoryId" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.HourlyRate"></label>
+                            <input asp-for="Form.HourlyRate" type="number" min="0.01" step="0.01" />
+                            <span asp-validation-for="Form.HourlyRate" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.HoursPerDay"></label>
+                            <input asp-for="Form.HoursPerDay" type="number" min="0.25" max="24" step="0.25" />
+                            <span asp-validation-for="Form.HoursPerDay" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.DurationDays"></label>
+                            <input asp-for="Form.DurationDays" type="number" min="1" />
+                            <span asp-validation-for="Form.DurationDays" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.WorkersNeeded"></label>
+                            <input asp-for="Form.WorkersNeeded" type="number" min="1" />
+                            <span asp-validation-for="Form.WorkersNeeded" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.OfferedCommissionRate"></label>
+                            <input asp-for="Form.OfferedCommissionRate" type="number" min="10" max="100" step="0.01" />
+                            <span asp-validation-for="Form.OfferedCommissionRate" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.StartDate"></label>
+                            <input asp-for="Form.StartDate" type="datetime-local" />
+                            <span asp-validation-for="Form.StartDate" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field">
+                            <label asp-for="Form.EndDate"></label>
+                            <input asp-for="Form.EndDate" type="datetime-local" />
+                            <span asp-validation-for="Form.EndDate" class="sq-field-validation"></span>
+                        </div>
+                        <div class="sq-field sq-field--wide">
+                            <label asp-for="Form.Description"></label>
+                            <textarea asp-for="Form.Description" rows="6"></textarea>
+                            <span asp-validation-for="Form.Description" class="sq-field-validation"></span>
+                        </div>
                     </div>
                 </div>
-                <div class="sq-card-actions">
-                    <a class="sq-button sq-button--ghost sq-button--sm" asp-action="Details" asp-route-id="@job.Id">Manage</a>
-                    <a class="sq-button sq-button--ghost sq-button--sm" asp-action="EditJob" asp-route-id="@job.Id">Edit</a>
+                <div class="modal-footer">
+                    <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="sq-button sq-button--primary" type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                        Submit for review
+                    </button>
                 </div>
-            </article>
-        }
-    </section>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @if (ViewData["OpenJobModal"] is true)
+    {
+        <script>
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('jobCreateModal')).show();
+        </script>
+    }
 }

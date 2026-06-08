@@ -86,12 +86,13 @@ namespace SideQuest.Controllers
 
         [HttpPost("Categories")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveCategory(CategoryFormViewModel form)
+        public async Task<IActionResult> SaveCategory([Bind(Prefix = "Form")] CategoryFormViewModel form)
         {
             SetAdminViewData("Categories", "Categories");
 
             if (!ModelState.IsValid)
             {
+                ViewData["OpenCategoryModal"] = true;
                 var categories = await _adminService.GetCategoriesAsync();
                 return View("Categories", new CategoryAdminPageViewModel
                 {
@@ -142,12 +143,13 @@ namespace SideQuest.Controllers
 
         [HttpPost("Achievements")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveAchievement(AchievementFormViewModel form)
+        public async Task<IActionResult> SaveAchievement([Bind(Prefix = "Form")] AchievementFormViewModel form)
         {
             SetAdminViewData("Achievements", "Achievements");
 
             if (!ModelState.IsValid)
             {
+                ViewData["OpenAchievementModal"] = true;
                 var achievements = await _adminService.GetAchievementsAsync();
                 return View("Achievements", new AchievementAdminPageViewModel
                 {
@@ -192,6 +194,46 @@ namespace SideQuest.Controllers
                 BudgetType = budgetType,
                 Jobs = result.Value?.Select(job => job.ToPortalJob()).ToList() ?? []
             });
+        }
+
+        [HttpPost("Jobs/{id:int}/Approve")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveJob(int id)
+        {
+            var adminUserId = _userManager.GetUserId(User);
+            if (adminUserId is null)
+            {
+                return Challenge();
+            }
+
+            var result = await _jobService.ApproveJobCommissionAsync(adminUserId, id);
+            SetDecisionMessage(result, "Job approved and opened to workers.");
+            return RedirectToAction(nameof(Jobs));
+        }
+
+        [HttpPost("Jobs/{id:int}/RequestCommission")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RequestCommissionUpdate(int id, AdminJobCommissionFormViewModel form)
+        {
+            var adminUserId = _userManager.GetUserId(User);
+            if (adminUserId is null)
+            {
+                return Challenge();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Enter a required commission percentage and a short note.";
+                return RedirectToAction(nameof(Jobs));
+            }
+
+            var result = await _jobService.RequestCommissionUpdateAsync(adminUserId, id, new JobCommissionUpdateRequest
+            {
+                RequiredCommissionRate = form.RequiredCommissionRate,
+                Note = form.Note
+            });
+            SetDecisionMessage(result, "Commission update requested.");
+            return RedirectToAction(nameof(Jobs));
         }
 
         [HttpGet("Finance")]

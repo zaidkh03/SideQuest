@@ -117,7 +117,7 @@
                     <span class="sq-eyebrow">Applications</span>
                     <h2>Recent Applications</h2>
                 </div>
-                <a class="sq-link-button" asp-controller="Worker" asp-action="Applications">View all</a>
+                <a class="sq-link-button" asp-controller="Worker" asp-action="Applications">View work</a>
             </div>
             @if (Model.RecentApplications.Count == 0)
             {
@@ -159,7 +159,7 @@
                     <span class="sq-eyebrow">Active Work</span>
                     <h2>Quest Log</h2>
                 </div>
-                <a class="sq-link-button" asp-controller="Worker" asp-action="Assignments">Open</a>
+                <a class="sq-link-button" asp-controller="Worker" asp-action="Applications">Open</a>
             </div>
             @if (Model.ActiveAssignments.Count == 0)
             {

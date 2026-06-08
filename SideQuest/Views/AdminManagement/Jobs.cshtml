@@ -4,8 +4,17 @@
 {
     Eyebrow = "Admin Portal",
     Title = "Jobs",
-    Subtitle = "Monitor all quest records across statuses, categories, and companies."
+    Subtitle = "Review quest records, commission offers, categories, and company activity."
 })" />
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="sq-alert sq-alert--success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="sq-alert sq-alert--danger">@errorMessage</div>
+}
 
 <form class="sq-panel sq-filter-bar" method="get">
     <div class="sq-field">
@@ -22,16 +31,6 @@
             }
         </select>
     </div>
-    <div class="sq-field">
-        <label for="budgetType">Budget</label>
-        <select id="budgetType" name="budgetType">
-            <option value="">Any budget</option>
-            @foreach (var budgetType in Enum.GetValues<BudgetType>())
-            {
-                <option value="@budgetType" selected="@(Model.BudgetType == budgetType)">@budgetType</option>
-            }
-        </select>
-    </div>
     <div class="sq-form-actions sq-form-actions--inline">
         <button class="sq-button sq-button--primary" type="submit">Filter</button>
         <a class="sq-button sq-button--ghost" asp-action="Jobs">Reset</a>
@@ -45,26 +44,90 @@
                 <tr>
                     <th>Quest</th>
                     <th>Company</th>
-                    <th>Reward</th>
+                    <th>Pay</th>
+                    <th>Commission</th>
                     <th>Status</th>
                     <th>Workers</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var job in Model.Jobs)
                 {
+                    var canReview = job.Status is JobStatus.PendingApproval or JobStatus.NeedsCommissionUpdate;
+                    var statusClass = job.Status == JobStatus.Open || job.Status == JobStatus.Completed
+                        ? "is-success"
+                        : job.Status == JobStatus.Cancelled || job.Status == JobStatus.NeedsCommissionUpdate
+                            ? "is-danger"
+                            : string.Empty;
                     <tr>
                         <td>
                             <strong>@job.Title</strong>
-                            <span>@job.CategoryName</span>
+                            <span>@job.CategoryName · @job.DurationDays day(s), @job.HoursPerDay.ToString("0.##") hr/day</span>
                         </td>
                         <td>@job.CompanyName</td>
                         <td>@job.RewardLabel</td>
-                        <td><span class="sq-status @(job.Status == JobStatus.Completed ? "is-success" : job.Status == JobStatus.Cancelled ? "is-danger" : "")">@job.Status</span></td>
+                        <td>
+                            <strong>@job.OfferedCommissionRate.ToString("0.##")%</strong>
+                            @if (job.RequiredCommissionRate.HasValue)
+                            {
+                                <span>Required @job.RequiredCommissionRate.Value.ToString("0.##")%</span>
+                            }
+                            else if (job.ApprovedCommissionRate.HasValue)
+                            {
+                                <span>Approved @job.ApprovedCommissionRate.Value.ToString("0.##")%</span>
+                            }
+                        </td>
+                        <td><span class="sq-status @statusClass">@job.Status</span></td>
                         <td>@job.AcceptedWorkers/@job.WorkersNeeded</td>
+                        <td>
+                            @if (canReview)
+                            {
+                                <div class="sq-card-actions">
+                                    <form asp-action="ApproveJob" asp-route-id="@job.Id" method="post">
+                                        <button class="sq-button sq-button--secondary sq-button--sm" type="submit">Approve</button>
+                                    </form>
+                                    <button class="sq-button sq-button--ghost sq-button--sm" type="button" data-bs-toggle="modal" data-bs-target="#commissionModal-@job.Id">Request more</button>
+                                </div>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 </section>
+
+@foreach (var job in Model.Jobs.Where(job => job.Status is JobStatus.PendingApproval or JobStatus.NeedsCommissionUpdate))
+{
+    <div class="modal fade sq-modal" id="commissionModal-@job.Id" tabindex="-1" aria-labelledby="commissionTitle-@job.Id" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form asp-action="RequestCommissionUpdate" asp-route-id="@job.Id" method="post">
+                    <div class="modal-header">
+                        <div>
+                            <span class="sq-eyebrow">Commission Review</span>
+                            <h2 class="modal-title" id="commissionTitle-@job.Id">@job.Title</h2>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body sq-verification-form">
+                        <p class="sq-muted-text">The company offered @job.OfferedCommissionRate.ToString("0.##")%. Enter the minimum percentage needed for approval.</p>
+                        <div class="sq-field">
+                            <label for="RequiredCommissionRate-@job.Id">Required commission %</label>
+                            <input id="RequiredCommissionRate-@job.Id" name="RequiredCommissionRate" type="number" min="10" max="100" step="0.01" value="@(job.RequiredCommissionRate ?? Math.Max(15m, job.OfferedCommissionRate + 5m))" />
+                        </div>
+                        <div class="sq-field">
+                            <label for="CommissionNote-@job.Id">Note to company</label>
+                            <textarea id="CommissionNote-@job.Id" name="Note" rows="4">@(job.CommissionReviewNote ?? "Please increase the platform commission percentage for this job to be approved.")</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="sq-button sq-button--ghost" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="sq-button sq-button--primary" type="submit">Send request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

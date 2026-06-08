@@ -60,7 +60,6 @@ namespace SideQuest.Controllers
             {
                 IsVerified = result.Value.IsVerified,
                 VerificationStatus = result.Value.VerificationStatus,
-                ActiveSubscription = result.Value.ActiveSubscription,
                 Form = new CompanyProfileFormViewModel
                 {
                     CompanyName = result.Value.CompanyName,
@@ -118,27 +117,22 @@ namespace SideQuest.Controllers
             var result = await _jobService.GetEmployerJobsAsync(userId);
             return View(new EmployerJobsPageViewModel
             {
+                Form = DefaultJobForm(await GetCategoryOptionsAsync()),
+                Categories = await GetCategoryOptionsAsync(),
                 Jobs = result.Value?.Select(job => job.ToPortalJob()).ToList() ?? []
             });
         }
 
         public async Task<IActionResult> CreateJob()
         {
-            SetEmployerViewData("PostQuest", "Post Quest");
-
-            return View("JobForm", new JobFormViewModel
-            {
-                Categories = await GetCategoryOptionsAsync(),
-                FixedBudget = 100,
-                HourlyRate = 10
-            });
+            return RedirectToAction(nameof(Jobs));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateJob(JobFormViewModel form)
+        public async Task<IActionResult> CreateJob([Bind(Prefix = "Form")] JobFormViewModel form)
         {
-            SetEmployerViewData("PostQuest", "Post Quest");
+            SetEmployerViewData("Jobs", "Company Jobs");
 
             var userId = GetUserId();
             if (userId is null)
@@ -148,20 +142,20 @@ namespace SideQuest.Controllers
 
             if (!ModelState.IsValid)
             {
-                form.Categories = await GetCategoryOptionsAsync();
-                return View("JobForm", form);
+                ViewData["OpenJobModal"] = true;
+                return View("Jobs", await BuildEmployerJobsPageAsync(userId, form));
             }
 
             var result = await _jobService.CreateJobAsync(userId, ToJobRequest(form));
             if (!result.Succeeded || result.Value is null)
             {
-                AddServiceErrors(result);
-                form.Categories = await GetCategoryOptionsAsync();
-                return View("JobForm", form);
+                AddServiceErrors(result, "Form.");
+                ViewData["OpenJobModal"] = true;
+                return View("Jobs", await BuildEmployerJobsPageAsync(userId, form));
             }
 
-            TempData["SuccessMessage"] = "Job draft created.";
-            return RedirectToAction(nameof(Details), new { id = result.Value.Id });
+            TempData["SuccessMessage"] = "Job submitted for admin review.";
+            return RedirectToAction(nameof(Jobs));
         }
 
         public async Task<IActionResult> EditJob(int id)
@@ -189,9 +183,12 @@ namespace SideQuest.Controllers
                 BudgetType = result.Value.BudgetType,
                 FixedBudget = result.Value.FixedBudget,
                 HourlyRate = result.Value.HourlyRate,
+                HoursPerDay = result.Value.HoursPerDay,
+                DurationDays = result.Value.DurationDays,
                 WorkersNeeded = result.Value.WorkersNeeded,
                 StartDate = result.Value.StartDate,
                 EndDate = result.Value.EndDate,
+                OfferedCommissionRate = result.Value.OfferedCommissionRate,
                 Categories = await GetCategoryOptionsAsync()
             });
         }
@@ -265,19 +262,26 @@ namespace SideQuest.Controllers
                     CompanyId = job.CompanyId,
                     CompanyName = job.Company.CompanyName,
                     CategoryId = job.CategoryId,
-                    CategoryName = job.Category.Name,
-                    Title = job.Title,
-                    Description = job.Description,
-                    BudgetType = job.BudgetType,
-                    FixedBudget = job.FixedBudget,
-                    HourlyRate = job.HourlyRate,
-                    WorkersNeeded = job.WorkersNeeded,
-                    AcceptedWorkers = job.Assignments.Count,
-                    StartDate = job.StartDate,
-                    EndDate = job.EndDate,
-                    Status = job.Status,
-                    CreatedAt = job.CreatedAt
-                }.ToPortalJob(),
+                CategoryName = job.Category.Name,
+                Title = job.Title,
+                Description = job.Description,
+                BudgetType = job.BudgetType,
+                FixedBudget = job.FixedBudget,
+                HourlyRate = job.HourlyRate,
+                HoursPerDay = job.HoursPerDay,
+                DurationDays = job.DurationDays,
+                WorkersNeeded = job.WorkersNeeded,
+                AcceptedWorkers = job.Assignments.Count,
+                StartDate = job.StartDate,
+                EndDate = job.EndDate,
+                Status = job.Status,
+                OfferedCommissionRate = job.OfferedCommissionRate,
+                RequiredCommissionRate = job.RequiredCommissionRate,
+                ApprovedCommissionRate = job.ApprovedCommissionRate,
+                CommissionReviewNote = job.CommissionReviewNote,
+                CommissionReviewedAt = job.CommissionReviewedAt,
+                CreatedAt = job.CreatedAt
+            }.ToPortalJob(),
                 Applications = job.Applications.OrderByDescending(application => application.AppliedAt).Select(application => application.ToPortalApplication()).ToList(),
                 Assignments = job.Assignments.OrderByDescending(assignment => assignment.CompletedAt ?? assignment.Job.CreatedAt).Select(assignment => assignment.ToPortalAssignment()).ToList(),
                 Reviews = job.Reviews.OrderByDescending(review => review.CreatedAt).Select(review => review.ToResponse()).ToList()
@@ -438,13 +442,45 @@ namespace SideQuest.Controllers
                 BudgetType = form.BudgetType,
                 FixedBudget = form.FixedBudget,
                 HourlyRate = form.HourlyRate,
+                HoursPerDay = form.HoursPerDay,
+                DurationDays = form.DurationDays,
                 WorkersNeeded = form.WorkersNeeded,
                 StartDate = form.StartDate,
-                EndDate = form.EndDate
+                EndDate = form.EndDate,
+                OfferedCommissionRate = form.OfferedCommissionRate
             };
         }
 
-        private void AddServiceErrors<T>(ServiceResult<T> result)
+        private async Task<EmployerJobsPageViewModel> BuildEmployerJobsPageAsync(string userId, JobFormViewModel form)
+        {
+            var categories = await GetCategoryOptionsAsync();
+            form.Categories = categories;
+            var result = await _jobService.GetEmployerJobsAsync(userId);
+            return new EmployerJobsPageViewModel
+            {
+                Form = form,
+                Categories = categories,
+                Jobs = result.Value?.Select(job => job.ToPortalJob()).ToList() ?? []
+            };
+        }
+
+        private static JobFormViewModel DefaultJobForm(IReadOnlyList<CategoryOptionViewModel> categories)
+        {
+            return new JobFormViewModel
+            {
+                Categories = categories,
+                BudgetType = BudgetType.Hourly,
+                HourlyRate = 10,
+                HoursPerDay = 8,
+                DurationDays = 1,
+                WorkersNeeded = 1,
+                OfferedCommissionRate = 10,
+                StartDate = DateTime.UtcNow.AddDays(1),
+                EndDate = DateTime.UtcNow.AddDays(2)
+            };
+        }
+
+        private void AddServiceErrors<T>(ServiceResult<T> result, string prefix = "")
         {
             if (result.Errors.Count == 0)
             {
@@ -456,7 +492,7 @@ namespace SideQuest.Controllers
             {
                 foreach (var message in error.Value)
                 {
-                    ModelState.AddModelError(error.Key, message);
+                    ModelState.AddModelError($"{prefix}{error.Key}", message);
                 }
             }
         }

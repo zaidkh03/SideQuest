@@ -122,7 +122,7 @@ namespace SideQuest.Controllers
 
         public async Task<IActionResult> Applications()
         {
-            SetWorkerViewData("Applications", "Applications");
+            SetWorkerViewData("Applications", "Work");
 
             var userId = GetUserId();
             if (userId is null)
@@ -139,9 +139,19 @@ namespace SideQuest.Controllers
                 .OrderByDescending(application => application.AppliedAt)
                 .ToListAsync();
 
-            return View(new WorkerApplicationsPageViewModel
+            var assignments = await _context.JobAssignments
+                .AsNoTracking()
+                .Include(assignment => assignment.Job)
+                    .ThenInclude(job => job.Company)
+                .Include(assignment => assignment.Worker)
+                .Where(assignment => assignment.WorkerId == userId)
+                .OrderByDescending(assignment => assignment.Job.CreatedAt)
+                .ToListAsync();
+
+            return View(new WorkerWorkPageViewModel
             {
-                Applications = applications.Select(application => application.ToPortalApplication()).ToList()
+                Applications = applications.Select(application => application.ToPortalApplication()).ToList(),
+                Assignments = assignments.Select(assignment => assignment.ToPortalAssignment()).ToList()
             });
         }
 
@@ -165,27 +175,7 @@ namespace SideQuest.Controllers
 
         public async Task<IActionResult> Assignments()
         {
-            SetWorkerViewData("Assignments", "Quest Log");
-
-            var userId = GetUserId();
-            if (userId is null)
-            {
-                return Challenge();
-            }
-
-            var assignments = await _context.JobAssignments
-                .AsNoTracking()
-                .Include(assignment => assignment.Job)
-                    .ThenInclude(job => job.Company)
-                .Include(assignment => assignment.Worker)
-                .Where(assignment => assignment.WorkerId == userId)
-                .OrderByDescending(assignment => assignment.Job.CreatedAt)
-                .ToListAsync();
-
-            return View(new WorkerAssignmentsPageViewModel
-            {
-                Assignments = assignments.Select(assignment => assignment.ToPortalAssignment()).ToList()
-            });
+            return RedirectToAction(nameof(Applications));
         }
 
         public async Task<IActionResult> Wallet()

@@ -1,10 +1,10 @@
-@model WorkerApplicationsPageViewModel
+@model WorkerWorkPageViewModel
 
 <partial name="_PageHeader" model="@(new PageHeaderViewModel
 {
     Eyebrow = "Worker Portal",
-    Title = "Applications",
-    Subtitle = "Track every quest application and withdraw pending applications when plans change."
+    Title = "Work",
+    Subtitle = "Track submitted applications, accepted assignments, completion status, and earnings."
 })" />
 
 @if (TempData["SuccessMessage"] is string successMessage)
@@ -16,51 +16,93 @@
     <div class="sq-alert sq-alert--danger">@errorMessage</div>
 }
 
-<section class="sq-panel">
-    @if (Model.Applications.Count == 0)
-    {
-        <div class="sq-empty-state">
-            <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
-            <h3>No applications yet</h3>
-            <p>Applications you submit from the quest board will appear here.</p>
-        </div>
-    }
-    else
-    {
-        <div class="sq-table-wrap">
-            <table class="sq-table">
-                <thead>
-                    <tr>
-                        <th>Quest</th>
-                        <th>Company</th>
-                        <th>Status</th>
-                        <th>Applied</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var application in Model.Applications)
+<section class="sq-dashboard-grid">
+    <div class="sq-dashboard-main">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Applications</span>
+                    <h2>Submitted</h2>
+                </div>
+            </div>
+            @if (Model.Applications.Count == 0)
+            {
+                <div class="sq-empty-state">
+                    <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
+                    <h3>No applications yet</h3>
+                    <p>Applications you submit from the quest board will appear here.</p>
+                </div>
+            }
+            else
+            {
+                <div class="sq-table-wrap">
+                    <table class="sq-table">
+                        <thead>
+                            <tr>
+                                <th>Quest</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Applied</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var application in Model.Applications)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@application.JobTitle</strong>
+                                        <span>@(application.CoverLetter.Length > 90 ? $"{application.CoverLetter[..90]}..." : application.CoverLetter)</span>
+                                    </td>
+                                    <td>@application.CompanyName</td>
+                                    <td><span class="sq-status @(application.Status == ApplicationStatus.Accepted ? "is-success" : application.Status == ApplicationStatus.Rejected ? "is-danger" : "")">@application.Status</span></td>
+                                    <td>@application.AppliedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
+                                    <td>
+                                        @if (application.Status == ApplicationStatus.Pending)
+                                        {
+                                            <form asp-action="Withdraw" asp-route-id="@application.Id" method="post">
+                                                <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Withdraw</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </article>
+    </div>
+
+    <aside class="sq-dashboard-side">
+        <article class="sq-panel">
+            <div class="sq-section-heading">
+                <div>
+                    <span class="sq-eyebrow">Quest Log</span>
+                    <h2>Assignments</h2>
+                </div>
+            </div>
+            @if (Model.Assignments.Count == 0)
+            {
+                <div class="sq-compact-empty">Accepted applications become assignments here.</div>
+            }
+            else
+            {
+                <div class="sq-feed-list">
+                    @foreach (var assignment in Model.Assignments)
                     {
-                        <tr>
-                            <td>
-                                <strong>@application.JobTitle</strong>
-                                <span>@(application.CoverLetter.Length > 90 ? $"{application.CoverLetter[..90]}..." : application.CoverLetter)</span>
-                            </td>
-                            <td>@application.CompanyName</td>
-                            <td><span class="sq-status @(application.Status == ApplicationStatus.Accepted ? "is-success" : application.Status == ApplicationStatus.Rejected ? "is-danger" : "")">@application.Status</span></td>
-                            <td>@application.AppliedAt.ToLocalTime().ToString("MMM d, yyyy")</td>
-                            <td>
-                                @if (application.Status == ApplicationStatus.Pending)
-                                {
-                                    <form asp-action="Withdraw" asp-route-id="@application.Id" method="post">
-                                        <button class="sq-button sq-button--ghost sq-button--sm" type="submit">Withdraw</button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
+                        <article class="sq-feed-item">
+                            <span class="sq-feed-item__icon material-symbols-outlined" aria-hidden="true">task_alt</span>
+                            <div>
+                                <h3>@assignment.JobTitle</h3>
+                                <p>@assignment.CompanyName · @assignment.AgreedRate.ToString("C")/hr</p>
+                                <p>@assignment.Earnings.ToString("C") earned</p>
+                                <span class="sq-status @(assignment.IsCompleted ? "is-success" : "")">@(assignment.IsCompleted ? "Completed" : "Active")</span>
+                            </div>
+                        </article>
                     }
-                </tbody>
-            </table>
-        </div>
-    }
+                </div>
+            }
+        </article>
+    </aside>
 </section>

@@ -21,6 +21,10 @@ namespace SideQuest.Services
 
         Task<ServiceResult<JobResponse>> PublishJobAsync(string employerUserId, int jobId);
 
+        Task<ServiceResult<JobResponse>> ApproveJobCommissionAsync(string adminUserId, int jobId);
+
+        Task<ServiceResult<JobResponse>> RequestCommissionUpdateAsync(string adminUserId, int jobId, JobCommissionUpdateRequest request);
+
         Task<ServiceResult<JobResponse>> CancelJobAsync(string employerUserId, int jobId);
 
         Task<ServiceResult<JobResponse>> CloseJobAsync(string employerUserId, int jobId);
@@ -28,6 +32,8 @@ namespace SideQuest.Services
 
     public class JobService : IJobService
     {
+        private const decimal MinimumCommissionRate = 10m;
+
         private readonly AppDbContext _context;
 
         public JobService(AppDbContext context)
@@ -109,17 +115,26 @@ namespace SideQuest.Services
                 CategoryId = request.CategoryId,
                 Title = request.Title.Trim(),
                 Description = request.Description.Trim(),
-                BudgetType = request.BudgetType,
-                FixedBudget = request.BudgetType == BudgetType.Fixed ? request.FixedBudget : 0,
-                HourlyRate = request.BudgetType == BudgetType.Hourly ? request.HourlyRate : 0,
+                BudgetType = BudgetType.Hourly,
+                FixedBudget = 0,
+                HourlyRate = request.HourlyRate,
+                HoursPerDay = request.HoursPerDay,
+                DurationDays = request.DurationDays,
                 WorkersNeeded = request.WorkersNeeded,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                Status = JobStatus.Draft,
+                Status = JobStatus.PendingApproval,
+                OfferedCommissionRate = request.OfferedCommissionRate,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Jobs.Add(job);
+            AddNotification(
+                company.UserId,
+                "Job sent for review",
+                $"{job.Title} was submitted for admin commission review.",
+                "JobPendingApproval");
+
             await _context.SaveChangesAsync();
 
             var savedJob = await GetJobQuery().FirstAsync(saved => saved.Id == job.Id);
@@ -141,9 +156,9 @@ namespace SideQuest.Services
                 return ServiceResult<JobResponse>.Forbidden("Only the job owner can update this job.");
             }
 
-            if (job.Status is JobStatus.Completed or JobStatus.Cancelled)
+            if (job.Status is JobStatus.Completed or JobStatus.Cancelled or JobStatus.InProgress or JobStatus.WaitingForReview)
             {
-                return ServiceResult<JobResponse>.Conflict("Completed or cancelled jobs cannot be updated.");
+                return ServiceResult<JobResponse>.Conflict("Jobs with active or completed work cannot be updated.");
             }
 
             var validation = await ValidateJobRequestAsync(request);
@@ -152,15 +167,43 @@ namespace SideQuest.Services
                 return validation;
             }
 
+            var requiredRate = job.RequiredCommissionRate;
+
             job.CategoryId = request.CategoryId;
             job.Title = request.Title.Trim();
             job.Description = request.Description.Trim();
-            job.BudgetType = request.BudgetType;
-            job.FixedBudget = request.BudgetType == BudgetType.Fixed ? request.FixedBudget : 0;
-            job.HourlyRate = request.BudgetType == BudgetType.Hourly ? request.HourlyRate : 0;
+            job.BudgetType = BudgetType.Hourly;
+            job.FixedBudget = 0;
+            job.HourlyRate = request.HourlyRate;
+            job.HoursPerDay = request.HoursPerDay;
+            job.DurationDays = request.DurationDays;
             job.WorkersNeeded = request.WorkersNeeded;
             job.StartDate = request.StartDate;
             job.EndDate = request.EndDate;
+            job.OfferedCommissionRate = request.OfferedCommissionRate;
+
+            if (requiredRate.HasValue && request.OfferedCommissionRate >= requiredRate.Value)
+            {
+                job.Status = JobStatus.Open;
+                job.ApprovedCommissionRate = request.OfferedCommissionRate;
+                job.RequiredCommissionRate = null;
+                job.CommissionReviewNote = $"Company accepted the requested {requiredRate.Value:0.##}% platform commission.";
+                job.CommissionReviewedAt = DateTime.UtcNow;
+                AddNotification(
+                    employerUserId,
+                    "Job approved",
+                    $"{job.Title} now matches the requested commission and is open to workers.",
+                    "JobApproved");
+            }
+            else
+            {
+                job.Status = JobStatus.PendingApproval;
+                job.ApprovedCommissionRate = null;
+                job.CommissionReviewNote = requiredRate.HasValue
+                    ? $"Admin requested at least {requiredRate.Value:0.##}% platform commission."
+                    : null;
+                job.CommissionReviewedAt = null;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -180,29 +223,99 @@ namespace SideQuest.Services
 
             if (job.Company.UserId != employerUserId)
             {
-                return ServiceResult<JobResponse>.Forbidden("Only the job owner can publish this job.");
+                return ServiceResult<JobResponse>.Forbidden("Only the job owner can submit this job.");
             }
 
-            if (job.Status != JobStatus.Draft)
+            if (job.Status == JobStatus.Draft)
             {
-                return ServiceResult<JobResponse>.Conflict("Only draft jobs can be published.");
+                job.Status = JobStatus.PendingApproval;
+                await _context.SaveChangesAsync();
+                return ServiceResult<JobResponse>.Success(job.ToResponse());
             }
 
-            var validation = await ValidateExistingJobAsync(job);
-            if (validation is not null)
+            return ServiceResult<JobResponse>.Conflict("Jobs are sent for admin review as soon as they are submitted.");
+        }
+
+        public async Task<ServiceResult<JobResponse>> ApproveJobCommissionAsync(string adminUserId, int jobId)
+        {
+            var job = await GetJobQuery()
+                .FirstOrDefaultAsync(existingJob => existingJob.Id == jobId);
+
+            if (job is null)
             {
-                return validation;
+                return ServiceResult<JobResponse>.NotFound("Job was not found.");
             }
 
-            var limitValidation = await ValidateSubscriptionLimitAsync(job.CompanyId);
-            if (limitValidation is not null)
+            if (job.Status is not JobStatus.PendingApproval and not JobStatus.NeedsCommissionUpdate)
             {
-                return limitValidation;
+                return ServiceResult<JobResponse>.Conflict("Only jobs waiting on commission review can be approved.");
+            }
+
+            if (job.OfferedCommissionRate < MinimumCommissionRate)
+            {
+                return ServiceResult<JobResponse>.Validation(
+                    nameof(job.OfferedCommissionRate),
+                    $"Platform commission must be at least {MinimumCommissionRate:0.##}%.");
             }
 
             job.Status = JobStatus.Open;
-            await _context.SaveChangesAsync();
+            job.ApprovedCommissionRate = job.OfferedCommissionRate;
+            job.RequiredCommissionRate = null;
+            job.CommissionReviewNote = "Approved for publication.";
+            job.CommissionReviewedAt = DateTime.UtcNow;
+            job.CommissionReviewedByAdminId = adminUserId;
 
+            AddNotification(
+                job.Company.UserId,
+                "Job approved",
+                $"{job.Title} was approved and is now open to workers.",
+                "JobApproved");
+
+            await _context.SaveChangesAsync();
+            return ServiceResult<JobResponse>.Success(job.ToResponse());
+        }
+
+        public async Task<ServiceResult<JobResponse>> RequestCommissionUpdateAsync(string adminUserId, int jobId, JobCommissionUpdateRequest request)
+        {
+            var job = await GetJobQuery()
+                .FirstOrDefaultAsync(existingJob => existingJob.Id == jobId);
+
+            if (job is null)
+            {
+                return ServiceResult<JobResponse>.NotFound("Job was not found.");
+            }
+
+            if (job.Status is not JobStatus.PendingApproval and not JobStatus.NeedsCommissionUpdate)
+            {
+                return ServiceResult<JobResponse>.Conflict("Only jobs waiting on commission review can be negotiated.");
+            }
+
+            if (request.RequiredCommissionRate < MinimumCommissionRate)
+            {
+                return ServiceResult<JobResponse>.Validation(
+                    nameof(request.RequiredCommissionRate),
+                    $"Required commission must be at least {MinimumCommissionRate:0.##}%.");
+            }
+
+            if (request.RequiredCommissionRate <= job.OfferedCommissionRate)
+            {
+                return ServiceResult<JobResponse>.Conflict("Approve the job when the offered commission already meets your requirement.");
+            }
+
+            job.Status = JobStatus.NeedsCommissionUpdate;
+            job.RequiredCommissionRate = request.RequiredCommissionRate;
+            job.ApprovedCommissionRate = null;
+            job.CommissionReviewNote = request.Note.Trim();
+            job.CommissionReviewedAt = DateTime.UtcNow;
+            job.CommissionReviewedByAdminId = adminUserId;
+
+            AddNotification(
+                job.Company.UserId,
+                "Commission update requested",
+                $"{job.Title} needs at least {request.RequiredCommissionRate:0.##}% platform commission before approval.",
+                "JobNeedsCommissionUpdate");
+
+            await _context.SaveChangesAsync();
             return ServiceResult<JobResponse>.Success(job.ToResponse());
         }
 
@@ -296,7 +409,7 @@ namespace SideQuest.Services
             }
 
             var page = Math.Max(1, query.Page);
-            var pageSize = Math.Clamp(query.PageSize, 1, 100);
+            var pageSize = Math.Clamp(query.PageSize, 1, 200);
 
             return queryable.Skip((page - 1) * pageSize).Take(pageSize);
         }
@@ -318,61 +431,41 @@ namespace SideQuest.Services
                 return ServiceResult<JobResponse>.Validation(nameof(request.WorkersNeeded), "At least one worker is required.");
             }
 
-            if (request.BudgetType == BudgetType.Fixed && request.FixedBudget <= 0)
-            {
-                return ServiceResult<JobResponse>.Validation(nameof(request.FixedBudget), "Fixed budget must be greater than zero.");
-            }
-
-            if (request.BudgetType == BudgetType.Hourly && request.HourlyRate <= 0)
+            if (request.HourlyRate <= 0)
             {
                 return ServiceResult<JobResponse>.Validation(nameof(request.HourlyRate), "Hourly rate must be greater than zero.");
             }
 
+            if (request.HoursPerDay <= 0 || request.HoursPerDay > 24)
+            {
+                return ServiceResult<JobResponse>.Validation(nameof(request.HoursPerDay), "Hours per day must be between 0.25 and 24.");
+            }
+
+            if (request.DurationDays < 1)
+            {
+                return ServiceResult<JobResponse>.Validation(nameof(request.DurationDays), "Number of days must be at least one.");
+            }
+
+            if (request.OfferedCommissionRate < MinimumCommissionRate || request.OfferedCommissionRate > 100)
+            {
+                return ServiceResult<JobResponse>.Validation(
+                    nameof(request.OfferedCommissionRate),
+                    $"Platform commission must be between {MinimumCommissionRate:0.##}% and 100%.");
+            }
+
             return null;
         }
 
-        private async Task<ServiceResult<JobResponse>?> ValidateExistingJobAsync(Job job)
+        private void AddNotification(string userId, string title, string message, string type)
         {
-            return await ValidateJobRequestAsync(new UpsertJobRequest
+            _context.Notifications.Add(new Notification
             {
-                Title = job.Title,
-                Description = job.Description,
-                CategoryId = job.CategoryId,
-                BudgetType = job.BudgetType,
-                FixedBudget = job.FixedBudget,
-                HourlyRate = job.HourlyRate,
-                WorkersNeeded = job.WorkersNeeded,
-                StartDate = job.StartDate,
-                EndDate = job.EndDate
+                UserId = userId,
+                Title = title,
+                Message = message,
+                Type = type,
+                CreatedAt = DateTime.UtcNow
             });
-        }
-
-        private async Task<ServiceResult<JobResponse>?> ValidateSubscriptionLimitAsync(int companyId)
-        {
-            var activeSubscription = await _context.CompanySubscriptions
-                .Include(subscription => subscription.Plan)
-                .Where(subscription => subscription.CompanyId == companyId && subscription.IsActive)
-                .OrderByDescending(subscription => subscription.StartDate)
-                .FirstOrDefaultAsync();
-
-            if (activeSubscription is null || activeSubscription.Plan.JobLimitPerMonth == int.MaxValue)
-            {
-                return null;
-            }
-
-            var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-            var publishedThisMonth = await _context.Jobs.CountAsync(job =>
-                job.CompanyId == companyId &&
-                job.Status != JobStatus.Draft &&
-                job.CreatedAt >= monthStart);
-
-            if (publishedThisMonth >= activeSubscription.Plan.JobLimitPerMonth)
-            {
-                return ServiceResult<JobResponse>.Conflict(
-                    $"The active {activeSubscription.Plan.Name} plan allows {activeSubscription.Plan.JobLimitPerMonth} published jobs per month.");
-            }
-
-            return null;
         }
     }
 }

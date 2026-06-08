@@ -24,24 +24,26 @@ namespace SideQuest.Controllers
         public async Task<IActionResult> Index()
         {
             SetCommunityViewData("Community");
+            var userId = _userManager.GetUserId(User);
 
             var posts = await _context.CommunityPosts
                 .AsNoTracking()
                 .Include(post => post.User)
                 .Include(post => post.Comments)
+                .Include(post => post.Likes)
                 .OrderByDescending(post => post.CreatedAt)
                 .Take(100)
                 .ToListAsync();
 
             return View(new CommunityIndexViewModel
             {
-                Posts = posts.Select(ToPostCard).ToList()
+                Posts = posts.Select(post => ToPostCard(post, userId)).ToList()
             });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CommunityPostFormViewModel form)
+        public async Task<IActionResult> Create([Bind(Prefix = "Form")] CommunityPostFormViewModel form)
         {
             if (!ModelState.IsValid)
             {
@@ -72,10 +74,12 @@ namespace SideQuest.Controllers
         public async Task<IActionResult> Details(int id)
         {
             SetCommunityViewData("Community");
+            var userId = _userManager.GetUserId(User);
 
             var post = await _context.CommunityPosts
                 .AsNoTracking()
                 .Include(existingPost => existingPost.User)
+                .Include(existingPost => existingPost.Likes)
                 .Include(existingPost => existingPost.Comments)
                     .ThenInclude(comment => comment.User)
                 .FirstOrDefaultAsync(existingPost => existingPost.Id == id);
@@ -87,13 +91,14 @@ namespace SideQuest.Controllers
 
             return View(new CommunityPostDetailViewModel
             {
-                Post = ToPostCard(post),
+                Post = ToPostCard(post, userId),
                 Content = post.Content,
                 Comments = post.Comments
                     .OrderBy(comment => comment.CreatedAt)
                     .Select(comment => new CommunityCommentViewModel
                     {
                         AuthorName = PortalPageMapping.DisplayName(comment.User),
+                        AuthorInitials = PortalPageMapping.Initials(PortalPageMapping.DisplayName(comment.User)),
                         Content = comment.Content,
                         CreatedAt = comment.CreatedAt
                     })
@@ -135,17 +140,61 @@ namespace SideQuest.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        private static CommunityPostCardViewModel ToPostCard(CommunityPost post)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleLike(int id, string? returnUrl)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Challenge();
+            }
+
+            if (!await _context.CommunityPosts.AnyAsync(post => post.Id == id))
+            {
+                return NotFound();
+            }
+
+            var like = await _context.CommunityPostLikes
+                .FirstOrDefaultAsync(existingLike => existingLike.PostId == id && existingLike.UserId == userId);
+
+            if (like is null)
+            {
+                _context.CommunityPostLikes.Add(new CommunityPostLike
+                {
+                    PostId = id,
+                    UserId = userId,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                _context.CommunityPostLikes.Remove(like);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl)
+                : RedirectToAction(nameof(Index));
+        }
+
+        private static CommunityPostCardViewModel ToPostCard(CommunityPost post, string? currentUserId)
         {
             var preview = post.Content.Length > 180 ? $"{post.Content[..180]}..." : post.Content;
+            var authorName = PortalPageMapping.DisplayName(post.User);
             return new CommunityPostCardViewModel
             {
                 Id = post.Id,
                 Title = post.Title,
                 ContentPreview = preview,
-                AuthorName = PortalPageMapping.DisplayName(post.User),
+                AuthorName = authorName,
+                AuthorInitials = PortalPageMapping.Initials(authorName),
                 Type = post.Type,
                 CommentCount = post.Comments.Count,
+                LikeCount = post.Likes.Count,
+                IsLikedByCurrentUser = !string.IsNullOrWhiteSpace(currentUserId)
+                    && post.Likes.Any(like => like.UserId == currentUserId),
                 CreatedAt = post.CreatedAt
             };
         }
